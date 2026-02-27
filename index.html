@@ -105,40 +105,47 @@ video{
 
 .rec{background:red}
 
-/* BOTÓN TEXTO */
-.text-toggle{
-  position:absolute;
-  top:15px;
-  right:15px;
-  background:rgba(0,0,0,.6);
-  padding:8px 14px;
-  border-radius:20px;
-  font-size:14px;
-  cursor:pointer;
-  z-index:20;
-}
-
-/* BOTÓN CONFIG */
+/* BOTONES SUPERIORES */
+.text-toggle,
 .settings-toggle{
   position:absolute;
   top:15px;
-  left:15px;
-  background:rgba(0,0,0,.6);
   padding:8px 14px;
   border-radius:20px;
   font-size:14px;
   cursor:pointer;
   z-index:20;
+  background:rgba(0,0,0,.6);
 }
 
-/* PANEL SLIDERS */
+.text-toggle{ right:15px; }
+.settings-toggle{ left:15px; }
+
+/* OVERLAY */
+.overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.4);
+  backdrop-filter:blur(2px);
+  opacity:0;
+  pointer-events:none;
+  transition:.3s ease;
+  z-index:90;
+}
+
+.overlay.show{
+  opacity:1;
+  pointer-events:auto;
+}
+
+/* PANEL */
 .settings-panel{
   position:fixed;
-  left:-260px;
+  left:-280px;
   top:0;
-  width:260px;
+  width:280px;
   height:100%;
-  background:rgba(20,20,20,.95);
+  background:rgba(20,20,20,.97);
   padding:20px;
   transition:.3s ease;
   z-index:100;
@@ -149,7 +156,15 @@ video{
 }
 
 .settings-panel h3{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
   margin-bottom:15px;
+}
+
+.close-btn{
+  cursor:pointer;
+  font-size:18px;
 }
 
 .settings-panel label{
@@ -158,12 +173,7 @@ video{
 
 .settings-panel input{
   width:100%;
-  margin-bottom:15px;
-}
-
-/* OCULTAR PANEL AL GRABAR */
-.recording .settings-panel{
-  display:none;
+  margin-bottom:20px;
 }
 </style>
 </head>
@@ -177,7 +187,7 @@ video{
 <div id="stage">
 
   <div class="text-toggle" onclick="toggleEditor()">Texto</div>
-  <div class="settings-toggle" onclick="toggleSettings()">⚙</div>
+  <div class="settings-toggle" onclick="openSettings()">⚙</div>
 
   <video id="camera" autoplay playsinline muted></video>
 
@@ -194,12 +204,20 @@ video{
   <button class="btn" onclick="stopRecording()">■</button>
 </div>
 
+<div class="overlay" id="overlay" onclick="closeSettings()"></div>
+
 <div class="settings-panel" id="settingsPanel">
-  <h3>Configuración</h3>
+  <h3>
+    Configuración
+    <span class="close-btn" onclick="closeSettings()">✕</span>
+  </h3>
+
   <label>Velocidad</label>
   <input type="range" min="0.05" max="1.5" step="0.05" value="0.2" id="speedControl">
+
   <label>Tamaño Texto</label>
   <input type="range" min="24" max="70" step="2" value="36" id="fontControl">
+
   <label>Altura Lectura</label>
   <input type="range" min="20" max="60" step="1" value="45" id="positionControl">
 </div>
@@ -215,7 +233,8 @@ let recordedChunks=[]
 const tele=document.getElementById("teleprompter")
 const video=document.getElementById("camera")
 const readingZone=document.getElementById("reading-zone")
-const body=document.body
+const panel=document.getElementById("settingsPanel")
+const overlay=document.getElementById("overlay")
 
 async function initCamera(){
   try{
@@ -230,8 +249,14 @@ document.getElementById("speedControl").oninput=e=>speed=parseFloat(e.target.val
 document.getElementById("fontControl").oninput=e=>tele.style.fontSize=e.target.value+"px"
 document.getElementById("positionControl").oninput=e=>readingZone.style.top=e.target.value+"%"
 
-function toggleSettings(){
-  document.getElementById("settingsPanel").classList.toggle("open")
+function openSettings(){
+  panel.classList.add("open")
+  overlay.classList.add("show")
+}
+
+function closeSettings(){
+  panel.classList.remove("open")
+  overlay.classList.remove("show")
 }
 
 function formatText(raw){
@@ -280,7 +305,6 @@ function animate(){
 
 function startRecording(){
   if(!window.stream) return
-  body.classList.add("recording")
   recordedChunks=[]
   mediaRecorder=new MediaRecorder(window.stream)
 
@@ -289,7 +313,6 @@ function startRecording(){
   }
 
   mediaRecorder.onstop=()=>{
-    body.classList.remove("recording")
     const blob=new Blob(recordedChunks,{type:"video/webm"})
     const url=URL.createObjectURL(blob)
     const a=document.createElement("a")
