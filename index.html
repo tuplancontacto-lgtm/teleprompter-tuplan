@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Promptor PRO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Segoe UI,sans-serif}
+
+body{
+  background:#0f0f0f;
+  color:white;
+  overflow:hidden;
+}
+
+/* ORIENTACIÓN */
+body.vertical #stage{aspect-ratio:9/16;margin:auto}
+body.horizontal #stage{aspect-ratio:16/9;margin:auto}
+
+/* EDITOR */
+#editor{
+  width:100%;
+  height:18vh;
+  padding:15px;
+  font-size:16px;
+  border:none;
+  outline:none;
+  background:#1a1a1a;
+  color:white;
+  resize:none;
+}
+
+/* STAGE */
+#stage{
+  position:relative;
+  height:82vh;
+  overflow:hidden;
+}
+
+/* VIDEO */
+video{
+  position:absolute;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  background:black;
+}
+
+/* INDICADOR REC */
+#rec-indicator{
+  position:absolute;
+  top:15px;
+  left:50%;
+  transform:translateX(-50%);
+  background:red;
+  color:white;
+  padding:6px 14px;
+  border-radius:20px;
+  font-size:14px;
+  display:none;
+  align-items:center;
+  gap:8px;
+}
+
+#rec-dot{
+  width:10px;
+  height:10px;
+  background:white;
+  border-radius:50%;
+}
+
+/* ANIMACIONES */
+.recording #rec-indicator{
+  display:flex;
+  animation:blink 1s infinite;
+}
+
+.recording .rec{
+  animation:pulse 1s infinite;
+}
+
+.recording .settings{
+  display:none;
+}
+
+@keyframes blink{
+  0%{opacity:1}
+  50%{opacity:.4}
+  100%{opacity:1}
+}
+
+@keyframes pulse{
+  0%{transform:scale(1)}
+  50%{transform:scale(1.1)}
+  100%{transform:scale(1)}
+}
+
+/* LECTURA */
+#reading-zone{
+  position:absolute;
+  width:100%;
+  text-align:center;
+  top:50%;
+  transform:translateY(-50%);
+  height:200px;
+  overflow:hidden;
+  pointer-events:none;
+}
+
+#teleprompter{
+  font-size:48px;
+  line-height:1.1;
+  letter-spacing:.5px;
+  max-width:70%;
+  margin:auto;
+  white-space:pre-wrap;
+  text-shadow:0 0 20px rgba(0,0,0,.9);
+  transition:transform .05s linear;
+}
+
+/* FADE */
+.fade-top,.fade-bottom{
+  position:absolute;
+  width:100%;
+  height:60px;
+  left:0;
+  pointer-events:none;
+}
+
+.fade-top{
+  top:0;
+  background:linear-gradient(to bottom,#0f0f0f,transparent);
+}
+
+.fade-bottom{
+  bottom:0;
+  background:linear-gradient(to top,#0f0f0f,transparent);
+}
+
+/* CONTROLES */
+.controls{
+  position:absolute;
+  bottom:20px;
+  width:100%;
+  display:flex;
+  justify-content:center;
+  gap:12px;
+}
+
+.btn{
+  width:55px;
+  height:55px;
+  border-radius:50%;
+  border:none;
+  cursor:pointer;
+  font-size:18px;
+  background:rgba(255,255,255,.15);
+  color:white;
+}
+
+.rec{background:rgba(255,0,0,.7)}
+
+/* SETTINGS */
+.settings{
+  position:absolute;
+  top:20px;
+  right:20px;
+  background:rgba(20,20,20,.9);
+  padding:15px;
+  border-radius:15px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.settings input{width:120px}
+</style>
+</head>
+
+<body class="vertical">
+
+<textarea id="editor" placeholder="Escribe tu guión aquí..."></textarea>
+
+<div id="stage">
+
+  <div id="rec-indicator">
+    <div id="rec-dot"></div>
+    GRABANDO
+  </div>
+
+  <video id="camera" autoplay playsinline muted></video>
+
+  <div id="reading-zone">
+    <div id="teleprompter"></div>
+  </div>
+
+  <div class="fade-top"></div>
+  <div class="fade-bottom"></div>
+
+  <div class="controls">
+    <button class="btn" onclick="play()">▶</button>
+    <button class="btn" onclick="stopScroll()">⏹</button>
+    <button class="btn rec" onclick="startRecording()">●</button>
+    <button class="btn" onclick="stopRecording()">■</button>
+    <button class="btn" onclick="toggleOrientation()">↔</button>
+  </div>
+
+  <div class="settings">
+    Velocidad
+    <input type="range" min="0.03" max="1.5" step="0.03" value="0.2" id="speedControl">
+
+    Tamaño
+    <input type="range" min="30" max="90" step="2" value="48" id="fontControl">
+
+    Margen Vertical
+    <input type="range" min="20" max="80" step="1" value="50" id="marginControl">
+
+    Espaciado
+    <input type="range" min="1" max="2" step="0.1" value="1.1" id="lineControl">
+  </div>
+
+</div>
+
+<script>
+let speed=0.2
+let position=0
+let isPlaying=false
+let animationId=null
+let mediaRecorder=null
+let recordedChunks=[]
+
+const tele=document.getElementById("teleprompter")
+const video=document.getElementById("camera")
+const readingZone=document.getElementById("reading-zone")
+const body=document.body
+
+/* CÁMARA */
+async function initCamera(){
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({video:true,audio:true})
+    video.srcObject=stream
+    window.stream=stream
+  }catch(e){console.log(e)}
+}
+initCamera()
+
+/* SLIDERS */
+document.getElementById("speedControl").oninput=e=>speed=parseFloat(e.target.value)
+document.getElementById("fontControl").oninput=e=>tele.style.fontSize=e.target.value+"px"
+document.getElementById("marginControl").oninput=e=>readingZone.style.top=e.target.value+"%"
+document.getElementById("lineControl").oninput=e=>tele.style.lineHeight=e.target.value
+
+/* FORMATEO FRASES */
+function formatText(raw){
+  let sentences=raw.replace(/\n/g," ").split(/(?<=[\.\!\?])/)
+  let result=""
+  sentences.forEach(s=>{
+    let words=s.trim().split(" ")
+    let line=""
+    let count=0
+    words.forEach(w=>{
+      line+=w+" "
+      count++
+      if(count>=5){
+        result+=line.trim()+"\n"
+        line=""
+        count=0
+      }
+    })
+    if(line.length>0) result+=line.trim()+"\n"
+    result+="\n"
+  })
+  return result
+}
+
+/* PLAY */
+function play(){
+  const raw=document.getElementById("editor").value
+  if(!raw.trim()) return
+  tele.innerText=formatText(raw)
+  position=200
+  tele.style.transform=`translateY(${position}px)`
+  isPlaying=true
+  animate()
+}
+
+/* STOP SCROLL */
+function stopScroll(){
+  isPlaying=false
+  cancelAnimationFrame(animationId)
+}
+
+/* ANIMACIÓN */
+function animate(){
+  if(!isPlaying) return
+  position-=speed
+  tele.style.transform=`translateY(${position}px)`
+  animationId=requestAnimationFrame(animate)
+}
+
+/* GRABACIÓN */
+function startRecording(){
+  if(!window.stream) return
+  recordedChunks=[]
+  mediaRecorder=new MediaRecorder(window.stream)
+
+  body.classList.add("recording")
+
+  mediaRecorder.ondataavailable=e=>{
+    if(e.data.size>0) recordedChunks.push(e.data)
+  }
+
+  mediaRecorder.onstop=()=>{
+    body.classList.remove("recording")
+
+    const blob=new Blob(recordedChunks,{type:"video/webm"})
+    const url=URL.createObjectURL(blob)
+    const a=document.createElement("a")
+    a.href=url
+    a.download="promptor_"+Date.now()+".webm"
+    a.click()
+  }
+
+  mediaRecorder.start()
+}
+
+function stopRecording(){
+  if(mediaRecorder && mediaRecorder.state!=="inactive"){
+    mediaRecorder.stop()
+  }
+}
+
+/* ORIENTACIÓN */
+function toggleOrientation(){
+  body.classList.toggle("vertical")
+  body.classList.toggle("horizontal")
+}
+</script>
+
+</body>
+</html>
