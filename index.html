@@ -2,33 +2,36 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Promptor PRO</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Teleprompter Pro</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Segoe UI,sans-serif}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial, sans-serif}
 body{background:#000;color:white;overflow:hidden}
 
 /* EDITOR */
-#editor-container{height:20vh;transition:.3s}
+#editor-container{height:20vh}
 #editor{
-  width:100%;height:100%;padding:15px;
-  font-size:16px;background:#1a1a1a;
-  color:white;border:none;resize:none
+  width:100%;
+  height:100%;
+  padding:15px;
+  font-size:16px;
+  background:#111;
+  color:white;
+  border:none;
+  resize:none;
 }
-.hide-editor #editor-container{height:0;overflow:hidden}
-
-/* STAGE */
-#stage{position:relative;height:80vh}
-.hide-editor #stage{height:100vh}
 
 /* VIDEO */
+#stage{position:relative;height:80vh}
 video{
-  position:absolute;width:100%;height:100%;
-  object-fit:cover
+  position:absolute;
+  width:100%;
+  height:100%;
+  object-fit:cover;
 }
 
-/* ZONA LECTURA — 3 LÍNEAS EXACTAS */
+/* TELEPROMPTER – SOLO 3 LINEAS */
 #reading-zone{
   position:absolute;
   width:100%;
@@ -39,75 +42,51 @@ video{
 }
 
 #teleprompter{
-  font-size:38px;
+  font-size:40px;
   line-height:40px;
   max-width:85%;
   margin:auto;
   white-space:pre-wrap;
-  text-shadow:0 0 20px rgba(0,0,0,.9);
-  will-change:transform;
+  text-shadow:0 0 15px rgba(0,0,0,.9);
+  transform:translateY(0);
 }
 
 /* CONTROLES */
 .controls{
   position:fixed;
+  bottom:40px;
   left:50%;
   transform:translateX(-50%);
-  bottom:90px;
   display:flex;
-  gap:14px;
-  z-index:50;
+  gap:15px;
 }
-.btn{
-  width:58px;height:58px;
+
+button{
+  width:60px;
+  height:60px;
   border-radius:50%;
   border:none;
   font-size:20px;
-  background:rgba(255,255,255,.2);
-  color:white;
   cursor:pointer;
 }
-.rec{background:red}
 
-/* BOTONES SUPERIORES */
-.top-btn{
-  position:absolute;
-  top:15px;
-  padding:8px 14px;
-  border-radius:20px;
-  font-size:14px;
-  cursor:pointer;
-  background:rgba(0,0,0,.6);
-  z-index:100;
-}
-#settingsBtn{left:15px}
-#textBtn{right:15px}
-
-/* PANEL */
-.overlay{
-  position:fixed;inset:0;
-  background:rgba(0,0,0,.4);
-  opacity:0;pointer-events:none;
-  transition:.3s;z-index:90;
-}
-.overlay.show{opacity:1;pointer-events:auto}
-
-.settings-panel{
-  position:fixed;left:-280px;top:0;
-  width:280px;height:100%;
-  background:rgba(20,20,20,.97);
-  padding:20px;transition:.3s;z-index:100;
-}
-.settings-panel.open{left:0}
-.settings-panel input{width:100%;margin-bottom:20px}
+.play{background:#444;color:white}
+.stop{background:#666;color:white}
+.rec{background:red;color:white}
+.stoprec{background:#999;color:black}
 
 /* CUENTA REGRESIVA */
 #countdown{
-  position:absolute;inset:0;
-  display:flex;align-items:center;justify-content:center;
-  font-size:120px;font-weight:bold;
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:120px;
+  font-weight:bold;
   background:rgba(0,0,0,.6);
-  z-index:200;opacity:0;transition:.3s;
+  opacity:0;
+  transition:.3s;
 }
 #countdown.show{opacity:1}
 </style>
@@ -116,131 +95,120 @@ video{
 <body>
 
 <div id="editor-container">
-  <textarea id="editor" placeholder="Escribe tu guión aquí..."></textarea>
+<textarea id="editor">
+“La Isapre es más cara…”
+
+Depende.
+
+Si ganas 1.800.000,
+tu 7% son 126.000.
+
+Con eso puedes tener acceso
+a clínicas privadas,
+reembolsos en menos de 48 horas,
+y beneficios adicionales.
+
+No es más caro.
+Es distinto.
+</textarea>
 </div>
 
 <div id="stage">
+<video id="camera" autoplay playsinline muted></video>
 
-  <div id="settingsBtn" class="top-btn" onclick="openSettings()">⚙</div>
-  <div id="textBtn" class="top-btn" onclick="toggleEditor()">Texto</div>
+<div id="reading-zone">
+<div id="teleprompter"></div>
+</div>
 
-  <video id="camera" autoplay playsinline muted></video>
-
-  <div id="reading-zone">
-    <div id="teleprompter"></div>
-  </div>
-
-  <div id="countdown">5</div>
+<div id="countdown">5</div>
 </div>
 
 <div class="controls">
-  <button class="btn" onclick="play()">▶</button>
-  <button class="btn" onclick="stopScroll()">⏹</button>
-  <button class="btn rec" onclick="startCountdown()">●</button>
-  <button class="btn" onclick="stopRecording()">■</button>
-</div>
-
-<div class="overlay" id="overlay" onclick="closeSettings()"></div>
-
-<div class="settings-panel" id="settingsPanel">
-  <h3>Configuración <span onclick="closeSettings()" style="cursor:pointer">✕</span></h3>
-
-  <label>Velocidad</label>
-  <input type="range" min="20" max="300" step="10" value="80" id="speedControl">
-
-  <label>Tamaño Texto</label>
-  <input type="range" min="28" max="60" step="2" value="38" id="fontControl">
-
-  <label>Altura Lectura</label>
-  <input type="range" min="5" max="70" step="1" value="40" id="positionControl">
+<button class="play" id="playBtn">▶</button>
+<button class="stop" id="stopBtn">⏹</button>
+<button class="rec" id="recBtn">●</button>
+<button class="stoprec" id="stopRecBtn">■</button>
 </div>
 
 <script>
-let speed=80
-let y=0
-let isPlaying=false
-let lastTime=null
-let mediaRecorder=null
-let recordedChunks=[]
-let countdownValue=5
+let speed = 120
+let y = 0
+let isPlaying = false
+let lastTime = null
+let mediaRecorder = null
+let recordedChunks = []
+let countdownValue = 5
 
-const tele=document.getElementById("teleprompter")
-const video=document.getElementById("camera")
-const readingZone=document.getElementById("reading-zone")
-const panel=document.getElementById("settingsPanel")
-const overlay=document.getElementById("overlay")
-const countdownEl=document.getElementById("countdown")
+const tele = document.getElementById("teleprompter")
+const readingZone = document.getElementById("reading-zone")
+const video = document.getElementById("camera")
+const countdownEl = document.getElementById("countdown")
 
+const playBtn = document.getElementById("playBtn")
+const stopBtn = document.getElementById("stopBtn")
+const recBtn = document.getElementById("recBtn")
+const stopRecBtn = document.getElementById("stopRecBtn")
+
+playBtn.addEventListener("click", play)
+stopBtn.addEventListener("click", stopScroll)
+recBtn.addEventListener("click", startCountdown)
+stopRecBtn.addEventListener("click", stopRecording)
+
+/* CAMARA */
 async function initCamera(){
   try{
-    const stream=await navigator.mediaDevices.getUserMedia({video:true,audio:true})
-    video.srcObject=stream
-    window.stream=stream
-  }catch(e){console.log(e)}
+    const stream = await navigator.mediaDevices.getUserMedia({video:true,audio:true})
+    video.srcObject = stream
+    window.stream = stream
+  }catch(e){
+    console.log("Permiso cámara/micrófono rechazado")
+  }
 }
 initCamera()
 
-document.getElementById("speedControl").oninput=e=>{
-  speed=parseFloat(e.target.value)
-}
-document.getElementById("fontControl").oninput=e=>{
-  tele.style.fontSize=e.target.value+"px"
-}
-document.getElementById("positionControl").oninput=e=>{
-  readingZone.style.top=e.target.value+"%"
-}
-
-function openSettings(){
-  panel.classList.add("open")
-  overlay.classList.add("show")
-}
-function closeSettings(){
-  panel.classList.remove("open")
-  overlay.classList.remove("show")
-}
-function toggleEditor(){
-  document.body.classList.toggle("hide-editor")
-}
-
+/* PLAY */
 function play(){
-  const raw=document.getElementById("editor").value
+  const raw = document.getElementById("editor").value
   if(!raw.trim()) return
 
-  tele.innerText=raw
+  tele.innerText = raw
 
-  // 🔥 inicia debajo de la zona visible
-  y=readingZone.offsetHeight
-  tele.style.transform=`translateY(${y}px)`
+  y = readingZone.offsetHeight + 150
+  tele.style.transform = `translateY(${y}px)`
 
-  isPlaying=true
-  lastTime=null
+  isPlaying = true
+  lastTime = null
   requestAnimationFrame(loop)
 }
 
 function stopScroll(){
-  isPlaying=false
+  isPlaying = false
 }
 
+/* SCROLL SUAVE */
 function loop(timestamp){
   if(!isPlaying) return
-  if(!lastTime) lastTime=timestamp
-  const delta=(timestamp-lastTime)/1000
-  lastTime=timestamp
-  y-=speed*delta
-  tele.style.transform=`translateY(${y}px)`
+  if(!lastTime) lastTime = timestamp
+  const delta = (timestamp - lastTime)/1000
+  lastTime = timestamp
+
+  y -= speed * delta
+  tele.style.transform = `translateY(${y}px)`
+
   requestAnimationFrame(loop)
 }
 
+/* CUENTA REGRESIVA */
 function startCountdown(){
-  countdownValue=5
-  countdownEl.innerText=countdownValue
+  countdownValue = 5
+  countdownEl.innerText = countdownValue
   countdownEl.classList.add("show")
 
-  const interval=setInterval(()=>{
+  const interval = setInterval(()=>{
     countdownValue--
-    countdownEl.innerText=countdownValue
+    countdownEl.innerText = countdownValue
 
-    if(countdownValue<=0){
+    if(countdownValue <= 0){
       clearInterval(interval)
       countdownEl.classList.remove("show")
       startRecording()
@@ -248,21 +216,22 @@ function startCountdown(){
   },1000)
 }
 
+/* GRABACION */
 function startRecording(){
   if(!window.stream) return
-  recordedChunks=[]
-  mediaRecorder=new MediaRecorder(window.stream)
+  recordedChunks = []
+  mediaRecorder = new MediaRecorder(window.stream)
 
-  mediaRecorder.ondataavailable=e=>{
-    if(e.data.size>0) recordedChunks.push(e.data)
+  mediaRecorder.ondataavailable = e=>{
+    if(e.data.size > 0) recordedChunks.push(e.data)
   }
 
-  mediaRecorder.onstop=()=>{
-    const blob=new Blob(recordedChunks,{type:"video/webm"})
-    const url=URL.createObjectURL(blob)
-    const a=document.createElement("a")
-    a.href=url
-    a.download="promptor_"+Date.now()+".webm"
+  mediaRecorder.onstop = ()=>{
+    const blob = new Blob(recordedChunks,{type:"video/webm"})
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "video_"+Date.now()+".webm"
     a.click()
   }
 
@@ -270,7 +239,7 @@ function startRecording(){
 }
 
 function stopRecording(){
-  if(mediaRecorder && mediaRecorder.state!=="inactive"){
+  if(mediaRecorder && mediaRecorder.state !== "inactive"){
     mediaRecorder.stop()
   }
 }
