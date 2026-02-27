@@ -9,7 +9,7 @@
 *{margin:0;padding:0;box-sizing:border-box;font-family:Segoe UI,sans-serif}
 
 body{
-  background:#0f0f0f;
+  background:#000;
   color:white;
   overflow:hidden;
 }
@@ -33,7 +33,6 @@ body{
   resize:none;
 }
 
-/* MODO OCULTO */
 .hide-editor #editor-container{
   height:0;
   overflow:hidden;
@@ -43,10 +42,8 @@ body{
 #stage{
   position:relative;
   height:80vh;
-  overflow:hidden;
 }
 
-/* Ajuste cuando editor oculto */
 .hide-editor #stage{
   height:100vh;
 }
@@ -57,7 +54,6 @@ video{
   width:100%;
   height:100%;
   object-fit:cover;
-  background:black;
 }
 
 /* LECTURA */
@@ -73,13 +69,12 @@ video{
   transition:.3s ease;
 }
 
-/* Cuando editor oculto sube texto */
 .hide-editor #reading-zone{
-  top:30%;
+  top:28%;
 }
 
 #teleprompter{
-  font-size:42px;
+  font-size:36px;
   line-height:1.1;
   max-width:85%;
   margin:auto;
@@ -87,30 +82,29 @@ video{
   text-shadow:0 0 20px rgba(0,0,0,.9);
 }
 
-/* CONTROLES */
+/* CONTROLES CORREGIDOS */
 .controls{
-  position:absolute;
-  bottom:calc(20px + env(safe-area-inset-bottom));
-  width:100%;
+  position:fixed;
+  left:50%;
+  transform:translateX(-50%);
+  bottom:90px; /* 👈 SUBIDOS */
   display:flex;
-  justify-content:center;
-  gap:12px;
-  z-index:10;
+  gap:14px;
+  z-index:50;
 }
 
 .btn{
-  width:55px;
-  height:55px;
+  width:58px;
+  height:58px;
   border-radius:50%;
   border:none;
-  cursor:pointer;
-  font-size:18px;
-  background:rgba(255,255,255,.15);
+  font-size:20px;
+  background:rgba(255,255,255,.2);
   color:white;
 }
 
 .rec{
-  background:rgba(255,0,0,.7);
+  background:red;
 }
 
 /* BOTÓN TEXTO */
@@ -126,14 +120,9 @@ video{
   z-index:20;
 }
 
-/* RESPONSIVE */
 @media(max-width:768px){
   #teleprompter{
-    font-size:34px;
-  }
-  .btn{
-    width:50px;
-    height:50px;
+    font-size:30px;
   }
 }
 </style>
@@ -147,9 +136,7 @@ video{
 
 <div id="stage">
 
-  <div class="text-toggle" onclick="toggleEditor()">
-    Texto
-  </div>
+  <div class="text-toggle" onclick="toggleEditor()">Texto</div>
 
   <video id="camera" autoplay playsinline muted></video>
 
@@ -157,13 +144,13 @@ video{
     <div id="teleprompter"></div>
   </div>
 
-  <div class="controls">
-    <button class="btn" onclick="play()">▶</button>
-    <button class="btn" onclick="stopScroll()">⏹</button>
-    <button class="btn rec" onclick="startRecording()">●</button>
-    <button class="btn" onclick="stopRecording()">■</button>
-  </div>
+</div>
 
+<div class="controls">
+  <button class="btn" onclick="play()">▶</button>
+  <button class="btn" onclick="stopScroll()">⏹</button>
+  <button class="btn rec" onclick="startRecording()">●</button>
+  <button class="btn" onclick="stopRecording()">■</button>
 </div>
 
 <script>
@@ -176,7 +163,6 @@ let recordedChunks=[]
 
 const tele=document.getElementById("teleprompter")
 const video=document.getElementById("camera")
-const body=document.body
 
 async function initCamera(){
   try{
