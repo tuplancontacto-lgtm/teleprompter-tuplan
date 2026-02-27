@@ -82,12 +82,12 @@ video{
   text-shadow:0 0 20px rgba(0,0,0,.9);
 }
 
-/* CONTROLES CORREGIDOS */
+/* BOTONES */
 .controls{
   position:fixed;
   left:50%;
   transform:translateX(-50%);
-  bottom:90px; /* 👈 SUBIDOS */
+  bottom:90px;
   display:flex;
   gap:14px;
   z-index:50;
@@ -103,9 +103,7 @@ video{
   color:white;
 }
 
-.rec{
-  background:red;
-}
+.rec{background:red}
 
 /* BOTÓN TEXTO */
 .text-toggle{
@@ -120,10 +118,52 @@ video{
   z-index:20;
 }
 
-@media(max-width:768px){
-  #teleprompter{
-    font-size:30px;
-  }
+/* BOTÓN CONFIG */
+.settings-toggle{
+  position:absolute;
+  top:15px;
+  left:15px;
+  background:rgba(0,0,0,.6);
+  padding:8px 14px;
+  border-radius:20px;
+  font-size:14px;
+  cursor:pointer;
+  z-index:20;
+}
+
+/* PANEL SLIDERS */
+.settings-panel{
+  position:fixed;
+  left:-260px;
+  top:0;
+  width:260px;
+  height:100%;
+  background:rgba(20,20,20,.95);
+  padding:20px;
+  transition:.3s ease;
+  z-index:100;
+}
+
+.settings-panel.open{
+  left:0;
+}
+
+.settings-panel h3{
+  margin-bottom:15px;
+}
+
+.settings-panel label{
+  font-size:14px;
+}
+
+.settings-panel input{
+  width:100%;
+  margin-bottom:15px;
+}
+
+/* OCULTAR PANEL AL GRABAR */
+.recording .settings-panel{
+  display:none;
 }
 </style>
 </head>
@@ -137,6 +177,7 @@ video{
 <div id="stage">
 
   <div class="text-toggle" onclick="toggleEditor()">Texto</div>
+  <div class="settings-toggle" onclick="toggleSettings()">⚙</div>
 
   <video id="camera" autoplay playsinline muted></video>
 
@@ -153,6 +194,16 @@ video{
   <button class="btn" onclick="stopRecording()">■</button>
 </div>
 
+<div class="settings-panel" id="settingsPanel">
+  <h3>Configuración</h3>
+  <label>Velocidad</label>
+  <input type="range" min="0.05" max="1.5" step="0.05" value="0.2" id="speedControl">
+  <label>Tamaño Texto</label>
+  <input type="range" min="24" max="70" step="2" value="36" id="fontControl">
+  <label>Altura Lectura</label>
+  <input type="range" min="20" max="60" step="1" value="45" id="positionControl">
+</div>
+
 <script>
 let speed=0.2
 let position=0
@@ -163,6 +214,8 @@ let recordedChunks=[]
 
 const tele=document.getElementById("teleprompter")
 const video=document.getElementById("camera")
+const readingZone=document.getElementById("reading-zone")
+const body=document.body
 
 async function initCamera(){
   try{
@@ -172,6 +225,14 @@ async function initCamera(){
   }catch(e){console.log(e)}
 }
 initCamera()
+
+document.getElementById("speedControl").oninput=e=>speed=parseFloat(e.target.value)
+document.getElementById("fontControl").oninput=e=>tele.style.fontSize=e.target.value+"px"
+document.getElementById("positionControl").oninput=e=>readingZone.style.top=e.target.value+"%"
+
+function toggleSettings(){
+  document.getElementById("settingsPanel").classList.toggle("open")
+}
 
 function formatText(raw){
   let sentences=raw.replace(/\n/g," ").split(/(?<=[\.\!\?])/)
@@ -219,6 +280,7 @@ function animate(){
 
 function startRecording(){
   if(!window.stream) return
+  body.classList.add("recording")
   recordedChunks=[]
   mediaRecorder=new MediaRecorder(window.stream)
 
@@ -227,6 +289,7 @@ function startRecording(){
   }
 
   mediaRecorder.onstop=()=>{
+    body.classList.remove("recording")
     const blob=new Blob(recordedChunks,{type:"video/webm"})
     const url=URL.createObjectURL(blob)
     const a=document.createElement("a")
