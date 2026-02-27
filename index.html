@@ -28,15 +28,14 @@ video{
   object-fit:cover
 }
 
-/* ZONA LECTURA SOLO 3 LINEAS */
+/* ZONA LECTURA (3 líneas reales) */
 #reading-zone{
   position:absolute;
   width:100%;
-  height:120px; /* 👈 altura fija 3 líneas */
+  height:120px;
   overflow:hidden;
   text-align:center;
   top:40%;
-  left:0;
 }
 
 #teleprompter{
@@ -66,15 +65,20 @@ video{
   font-size:20px;
   background:rgba(255,255,255,.2);
   color:white;
+  cursor:pointer;
 }
 .rec{background:red}
 
 /* BOTONES SUPERIORES */
 .top-btn{
-  position:absolute;top:15px;
-  padding:8px 14px;border-radius:20px;
-  font-size:14px;cursor:pointer;
-  background:rgba(0,0,0,.6);z-index:100;
+  position:absolute;
+  top:15px;
+  padding:8px 14px;
+  border-radius:20px;
+  font-size:14px;
+  cursor:pointer;
+  background:rgba(0,0,0,.6);
+  z-index:100;
 }
 #settingsBtn{left:15px}
 #textBtn{right:15px}
@@ -142,7 +146,7 @@ video{
   <h3>Configuración <span onclick="closeSettings()" style="cursor:pointer">✕</span></h3>
 
   <label>Velocidad</label>
-  <input type="range" min="10" max="300" step="5" value="80" id="speedControl">
+  <input type="range" min="20" max="300" step="10" value="80" id="speedControl">
 
   <label>Tamaño Texto</label>
   <input type="range" min="28" max="60" step="2" value="38" id="fontControl">
@@ -153,7 +157,7 @@ video{
 
 <script>
 let speed=80
-let yPosition=0
+let y=0
 let isPlaying=false
 let lastTime=null
 let mediaRecorder=null
@@ -176,6 +180,7 @@ async function initCamera(){
 }
 initCamera()
 
+/* SLIDERS */
 document.getElementById("speedControl").oninput=e=>{
   speed=parseFloat(e.target.value)
 }
@@ -186,6 +191,7 @@ document.getElementById("positionControl").oninput=e=>{
   readingZone.style.top=e.target.value+"%"
 }
 
+/* PANEL */
 function openSettings(){
   panel.classList.add("open")
   overlay.classList.add("show")
@@ -198,33 +204,30 @@ function toggleEditor(){
   document.body.classList.toggle("hide-editor")
 }
 
-function formatText(raw){
-  return raw
-}
-
+/* PLAY */
 function play(){
   const raw=document.getElementById("editor").value
   if(!raw.trim()) return
-  tele.innerText=formatText(raw)
-  yPosition=0
-  tele.style.transform=`translateY(0px)`
+  tele.innerText=raw
+  y=0
+  tele.style.transform="translateY(0px)"
   isPlaying=true
   lastTime=null
-  requestAnimationFrame(scrollLoop)
+  requestAnimationFrame(loop)
 }
 
 function stopScroll(){
   isPlaying=false
 }
 
-function scrollLoop(timestamp){
+function loop(timestamp){
   if(!isPlaying) return
   if(!lastTime) lastTime=timestamp
   const delta=(timestamp-lastTime)/1000
   lastTime=timestamp
-  yPosition-=speed*delta
-  tele.style.transform=`translateY(${yPosition}px)`
-  requestAnimationFrame(scrollLoop)
+  y-=speed*delta
+  tele.style.transform=`translateY(${y}px)`
+  requestAnimationFrame(loop)
 }
 
 /* CUENTA REGRESIVA */
