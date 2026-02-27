@@ -62,15 +62,10 @@ video{
   width:100%;
   text-align:center;
   top:45%;
-  transform:translateY(-50%);
   height:200px;
   overflow:hidden;
   pointer-events:none;
-  transition:.3s ease;
-}
-
-.hide-editor #reading-zone{
-  top:28%;
+  transition:.2s ease;
 }
 
 #teleprompter{
@@ -82,7 +77,7 @@ video{
   text-shadow:0 0 20px rgba(0,0,0,.9);
 }
 
-/* BOTONES */
+/* CONTROLES */
 .controls{
   position:fixed;
   left:50%;
@@ -105,75 +100,26 @@ video{
 
 .rec{background:red}
 
-/* BOTONES SUPERIORES */
-.text-toggle,
-.settings-toggle{
+/* CUENTA REGRESIVA */
+#countdown{
   position:absolute;
-  top:15px;
-  padding:8px 14px;
-  border-radius:20px;
-  font-size:14px;
-  cursor:pointer;
-  z-index:20;
-  background:rgba(0,0,0,.6);
-}
-
-.text-toggle{ right:15px; }
-.settings-toggle{ left:15px; }
-
-/* OVERLAY */
-.overlay{
-  position:fixed;
   inset:0;
-  background:rgba(0,0,0,.4);
-  backdrop-filter:blur(2px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:120px;
+  font-weight:bold;
+  background:rgba(0,0,0,.6);
+  backdrop-filter:blur(5px);
+  z-index:200;
   opacity:0;
   pointer-events:none;
   transition:.3s ease;
-  z-index:90;
 }
 
-.overlay.show{
+#countdown.show{
   opacity:1;
   pointer-events:auto;
-}
-
-/* PANEL */
-.settings-panel{
-  position:fixed;
-  left:-280px;
-  top:0;
-  width:280px;
-  height:100%;
-  background:rgba(20,20,20,.97);
-  padding:20px;
-  transition:.3s ease;
-  z-index:100;
-}
-
-.settings-panel.open{
-  left:0;
-}
-
-.settings-panel h3{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:15px;
-}
-
-.close-btn{
-  cursor:pointer;
-  font-size:18px;
-}
-
-.settings-panel label{
-  font-size:14px;
-}
-
-.settings-panel input{
-  width:100%;
-  margin-bottom:20px;
 }
 </style>
 </head>
@@ -186,40 +132,21 @@ video{
 
 <div id="stage">
 
-  <div class="text-toggle" onclick="toggleEditor()">Texto</div>
-  <div class="settings-toggle" onclick="openSettings()">⚙</div>
-
   <video id="camera" autoplay playsinline muted></video>
 
   <div id="reading-zone">
     <div id="teleprompter"></div>
   </div>
 
+  <div id="countdown">5</div>
+
 </div>
 
 <div class="controls">
   <button class="btn" onclick="play()">▶</button>
   <button class="btn" onclick="stopScroll()">⏹</button>
-  <button class="btn rec" onclick="startRecording()">●</button>
+  <button class="btn rec" onclick="startCountdown()">●</button>
   <button class="btn" onclick="stopRecording()">■</button>
-</div>
-
-<div class="overlay" id="overlay" onclick="closeSettings()"></div>
-
-<div class="settings-panel" id="settingsPanel">
-  <h3>
-    Configuración
-    <span class="close-btn" onclick="closeSettings()">✕</span>
-  </h3>
-
-  <label>Velocidad</label>
-  <input type="range" min="0.05" max="1.5" step="0.05" value="0.2" id="speedControl">
-
-  <label>Tamaño Texto</label>
-  <input type="range" min="24" max="70" step="2" value="36" id="fontControl">
-
-  <label>Altura Lectura</label>
-  <input type="range" min="20" max="60" step="1" value="45" id="positionControl">
 </div>
 
 <script>
@@ -229,12 +156,11 @@ let isPlaying=false
 let animationId=null
 let mediaRecorder=null
 let recordedChunks=[]
+let countdownValue=5
 
 const tele=document.getElementById("teleprompter")
 const video=document.getElementById("camera")
-const readingZone=document.getElementById("reading-zone")
-const panel=document.getElementById("settingsPanel")
-const overlay=document.getElementById("overlay")
+const countdownEl=document.getElementById("countdown")
 
 async function initCamera(){
   try{
@@ -244,20 +170,6 @@ async function initCamera(){
   }catch(e){console.log(e)}
 }
 initCamera()
-
-document.getElementById("speedControl").oninput=e=>speed=parseFloat(e.target.value)
-document.getElementById("fontControl").oninput=e=>tele.style.fontSize=e.target.value+"px"
-document.getElementById("positionControl").oninput=e=>readingZone.style.top=e.target.value+"%"
-
-function openSettings(){
-  panel.classList.add("open")
-  overlay.classList.add("show")
-}
-
-function closeSettings(){
-  panel.classList.remove("open")
-  overlay.classList.remove("show")
-}
 
 function formatText(raw){
   let sentences=raw.replace(/\n/g," ").split(/(?<=[\.\!\?])/)
@@ -303,7 +215,25 @@ function animate(){
   animationId=requestAnimationFrame(animate)
 }
 
-function startRecording(){
+/* 🔥 CUENTA REGRESIVA */
+function startCountdown(){
+  countdownValue=5
+  countdownEl.innerText=countdownValue
+  countdownEl.classList.add("show")
+
+  const interval=setInterval(()=>{
+    countdownValue--
+    countdownEl.innerText=countdownValue
+
+    if(countdownValue<=0){
+      clearInterval(interval)
+      countdownEl.classList.remove("show")
+      startRecordingReal()
+    }
+  },1000)
+}
+
+function startRecordingReal(){
   if(!window.stream) return
   recordedChunks=[]
   mediaRecorder=new MediaRecorder(window.stream)
@@ -328,10 +258,6 @@ function stopRecording(){
   if(mediaRecorder && mediaRecorder.state!=="inactive"){
     mediaRecorder.stop()
   }
-}
-
-function toggleEditor(){
-  document.body.classList.toggle("hide-editor")
 }
 </script>
 
