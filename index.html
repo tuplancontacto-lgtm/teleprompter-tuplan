@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
 
-<title>Teleprompter Pro</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Teleprompter Profesional</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
 
@@ -12,7 +15,7 @@ body{
 margin:0;
 background:black;
 color:white;
-font-family:Arial,Helvetica,sans-serif;
+font-family:Inter;
 overflow:hidden;
 }
 
@@ -21,515 +24,385 @@ position:fixed;
 width:100%;
 height:100%;
 object-fit:cover;
-z-index:-1;
+z-index:1;
 }
 
-#readingZone{
-position:absolute;
-width:90%;
-left:5%;
-top:8%;
-text-align:center;
-overflow:hidden;
-height:220px;
-}
+#textoContainer{
 
-#teleprompter{
 position:absolute;
+bottom:-200px;
 width:100%;
-line-height:1.4em;
-font-size:38px;
+text-align:center;
+z-index:2;
+pointer-events:none;
+
+}
+
+.linea{
+
+opacity:0;
 font-weight:600;
-text-shadow:0 0 10px black;
+margin:10px;
+transition:opacity 0.6s;
+
 }
 
-.controls{
+.panel{
 
 position:fixed;
-bottom:20px;
+bottom:0;
 width:100%;
-text-align:center;
-}
-
-button{
-
-font-size:20px;
-padding:10px 14px;
-margin:4px;
-border-radius:8px;
-border:none;
 background:#111;
-color:white;
-
-}
-
-.rec{
-background:red;
-}
-
-#sliders{
-
-position:fixed;
-right:10px;
-top:100px;
-background:rgba(0,0,0,.7);
 padding:10px;
-border-radius:10px;
-display:block;
-
-}
-
-.sliderBlock{
-margin-bottom:15px;
-}
-
-input[type=range]{
-width:120px;
-}
-
-#editorBox{
-
-position:fixed;
-top:0;
-width:100%;
-height:180px;
-background:black;
-display:none;
+z-index:3;
 
 }
 
 textarea{
 
-width:95%;
-height:140px;
-margin:10px;
-font-size:20px;
+width:100%;
+height:80px;
+font-size:16px;
+}
+
+button{
+
+padding:10px 15px;
+font-size:16px;
+border-radius:8px;
+border:none;
+background:#007aff;
+color:white;
+margin:5px;
 
 }
 
-#countdown{
+#stopBtn{
+display:none;
+background:red;
+}
+
+.sliderVertical{
 
 position:fixed;
-top:40%;
-width:100%;
-text-align:center;
-font-size:90px;
-display:none;
+right:10px;
+top:30%;
+height:200px;
+z-index:3;
+}
 
+input[type=range]{
+writing-mode: bt-lr;
+-webkit-appearance: slider-vertical;
+height:200px;
+}
+
+#preview{
+
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:black;
+display:none;
+z-index:5;
+
+}
+
+#preview video{
+width:100%;
+height:90%;
+}
+
+#guardarBtn{
+background:green;
 }
 
 </style>
-
 </head>
 
 <body>
 
-<video id="video" autoplay muted playsinline></video>
+<video id="camara" autoplay muted playsinline></video>
 
-<div id="readingZone">
-<div id="teleprompter"></div>
-</div>
+<div id="textoContainer"></div>
 
-<div id="editorBox">
+<div class="sliderVertical">
 
-<textarea id="editor">
-
-“La Isapre es más cara”…
-Depende.
-
-Si ganas 1.800.000,
-tu 7% son 126.000.
-
-Con eso puedes tener acceso
-a clínicas privadas,
-
-reembolsos en menos de 48 horas,
-
-y beneficios adicionales.
-
-No es más caro.
-Es distinto.
-
-Soy José Mora
-Asesor Isapre Colmena
-
-</textarea>
+<input type="range"
+id="sizeSlider"
+min="30"
+max="120">
 
 </div>
 
+<div class="panel" id="panel">
 
-<div id="sliders">
+<textarea id="texto"></textarea>
 
-<div class="sliderBlock">
+<br>
 
 Velocidad
+<input type="range"
+id="velocidad"
+min="20"
+max="100"
+value="50">
+
 <br>
 
-<input id="speedSlider" type="range"
-min="1" max="10" value="3">
+<button onclick="grabar()">
+Grabar
+</button>
 
 </div>
 
 
-<div class="sliderBlock">
+<button id="stopBtn"
+onclick="detener()">
+STOP
+</button>
 
-Tamaño texto
+
+<div id="preview">
+
+<video id="videoPreview"
+controls></video>
+
 <br>
 
-<input id="fontSlider" type="range"
-min="24" max="80" value="38">
+<button id="guardarBtn"
+onclick="guardarVideo()">
+Guardar Video
+</button>
 
 </div>
 
-
-<div class="sliderBlock">
-
-Altura texto
-<br>
-
-<input id="heightSlider"
-type="range"
-min="0"
-max="90"
-value="8">
-
-</div>
-
-</div>
-
-
-<div class="controls">
-
-<button onclick="toggleEditor()">Texto</button>
-
-<button onclick="play()">Play</button>
-
-<button onclick="pause()">Pause</button>
-
-<button onclick="stop()">Stop</button>
-
-<button class="rec" onclick="startRecording()">REC</button>
-
-</div>
-
-
-<div id="countdown"></div>
 
 <script>
 
+let stream;
+let recorder;
+let chunks=[];
+let velocidad=50;
+let fontSize=60;
 
-let video=document.getElementById("video")
+const textoInput=document.getElementById("texto");
+const velocidadSlider=document.getElementById("velocidad");
+const sizeSlider=document.getElementById("sizeSlider");
+
+
+// RESTAURAR CONFIG
+
+textoInput.value=localStorage.getItem("texto")||"";
+velocidadSlider.value=localStorage.getItem("velocidad")||50;
+sizeSlider.value=localStorage.getItem("size")||60;
+
+
+// GUARDAR CONFIG
+
+textoInput.oninput=()=>localStorage.setItem("texto",textoInput.value);
+velocidadSlider.oninput=()=>{
+velocidad=velocidadSlider.value;
+localStorage.setItem("velocidad",velocidad);
+}
+
+sizeSlider.oninput=()=>{
+
+fontSize=sizeSlider.value;
+
+localStorage.setItem("size",fontSize);
+
+document.querySelectorAll(".linea")
+.forEach(l=>l.style.fontSize=fontSize+"px");
+
+}
+
+
+
+// CAMARA
 
 navigator.mediaDevices.getUserMedia({
 
 video:{
-width:{ideal:1280},
-height:{ideal:720},
-facingMode:"user"
-
+width:1920,
+height:1080
 },
 
 audio:true
 
-}).then(stream=>{
-
-video.srcObject=stream
-window.stream=stream
-
 })
 
+.then(s=>{
 
-let tele=document.getElementById("teleprompter")
+stream=s;
 
-let editor=document.getElementById("editor")
+document
+.getElementById("camara")
+.srcObject=s;
 
-let readingZone=document.getElementById("readingZone")
-
-
-let speed=2
-
-let pos=0
-
-let playing=false
-
-let recorder
-
-let chunks=[]
+});
 
 
-function formatText(){
 
-let txt=editor.value
+// TELEPROMPTER
 
-txt=txt.replace(/\n\n/g,"\n")
+function iniciarTexto(){
 
-tele.innerHTML=txt.replace(/\n/g,"<br>")
+const container=
+document.getElementById("textoContainer");
 
-}
+container.innerHTML="";
 
+const palabras=
+textoInput.value.split(" ");
 
-formatText()
+let i=0;
 
+setInterval(()=>{
 
-editor.oninput=formatText
+container.innerHTML="";
 
+for(let j=0;j<3;j++){
 
-function play(){
+if(!palabras[i+j])break;
 
-playing=true
+let div=
+document.createElement("div");
 
-}
+div.className="linea";
 
+div.style.fontSize=fontSize+"px";
 
-function pause(){
+div.innerText=
+palabras[i+j];
 
-playing=false
-
-}
-
-
-function stop(){
-
-playing=false
-pos=0
-
-tele.style.top="0px"
+container.appendChild(div);
 
 }
 
+setTimeout(()=>{
 
-function loop(){
+document
+.querySelectorAll(".linea")
+.forEach(l=>l.style.opacity=1);
 
-if(playing){
-
-pos-=speed
-
-tele.style.top=pos+"px"
-
-}
-
-requestAnimationFrame(loop)
-
-}
-
-loop()
+},50);
 
 
+i++;
 
-speedSlider.oninput=e=>{
-
-speed=parseInt(e.target.value)
-
-saveSettings()
-
-}
+container.style.bottom=
+(parseInt(container.style.bottom||-200)+5)
++"px";
 
 
-fontSlider.oninput=e=>{
-
-tele.style.fontSize=e.target.value+"px"
-
-saveSettings()
-
-}
-
-
-heightSlider.oninput=e=>{
-
-readingZone.style.top=e.target.value+"%"
-
-saveSettings()
-
-}
-
-
-function toggleEditor(){
-
-let box=document.getElementById("editorBox")
-
-if(box.style.display=="none")
-box.style.display="block"
-else
-box.style.display="none"
+},150-velocidad);
 
 }
 
 
 
-function startRecording(){
+// GRABAR
 
-document.getElementById("sliders").style.display="none"
+function grabar(){
 
-document.querySelector(".controls").innerHTML=
+document
+.getElementById("panel")
+.style.display="none";
 
-'<button onclick="stopRecording()">STOP</button>'
+document
+.querySelector(".sliderVertical")
+.style.display="none";
+
+document
+.getElementById("stopBtn")
+.style.display="block";
 
 
-countdown()
+chunks=[];
+
+let options={
+mimeType:"video/mp4"
+};
+
+try{
+
+recorder=
+new MediaRecorder(stream,options);
+
+}catch{
+
+recorder=
+new MediaRecorder(stream);
+
+}
+
+
+recorder.ondataavailable=e=>chunks.push(e.data);
+
+recorder.onstop=()=>{
+
+let blob=
+new Blob(chunks,{type:"video/mp4"});
+
+let url=
+URL.createObjectURL(blob);
+
+document
+.getElementById("preview")
+.style.display="block";
+
+document
+.getElementById("videoPreview")
+.src=url;
+
+window.videoBlob=blob;
+
+};
+
+
+recorder.start();
+
+iniciarTexto();
 
 }
 
 
 
-function countdown(){
+// STOP
 
-let c=document.getElementById("countdown")
+function detener(){
 
-c.style.display="block"
+recorder.stop();
 
-let n=5
-
-c.innerHTML=n
-
-let i=setInterval(()=>{
-
-n--
-
-c.innerHTML=n
-
-if(n==0){
-
-clearInterval(i)
-
-c.style.display="none"
-
-record()
-
-play()
-
-}
-
-},1000)
+document
+.getElementById("stopBtn")
+.style.display="none";
 
 }
 
 
 
-function record(){
+// GUARDAR
 
-chunks=[]
+function guardarVideo(){
 
-let mime=""
+let a=document.createElement("a");
 
-if(MediaRecorder.isTypeSupported("video/mp4"))
-mime="video/mp4"
-else
-mime="video/webm"
+a.href=
+URL.createObjectURL(window.videoBlob);
 
+a.download=
+"teleprompter.mp4";
 
-recorder=new MediaRecorder(stream,{
-
-mimeType:mime,
-videoBitsPerSecond:5000000
-
-})
-
-
-recorder.ondataavailable=e=>{
-
-chunks.push(e.data)
+a.click();
 
 }
-
-
-recorder.onstop=saveVideo
-
-recorder.start()
-
-}
-
-
-
-function stopRecording(){
-
-recorder.stop()
-
-playing=false
-
-document.getElementById("sliders").style.display="block"
-
-location.reload()
-
-}
-
-
-
-function saveVideo(){
-
-
-let mime=chunks[0].type
-
-let ext=mime.includes("mp4")?"mp4":"webm"
-
-let blob=new Blob(chunks,{type:mime})
-
-let url=URL.createObjectURL(blob)
-
-
-let w=window.open("")
-
-w.document.write(`
-
-<body style="background:black">
-
-<video controls autoplay style="width:100%">
-
-<source src="${url}" type="${mime}">
-
-</video>
-
-<br><br>
-
-<a href="${url}" download="video.${ext}"
-style="color:white;font-size:30px">
-
-DESCARGAR VIDEO
-
-</a>
-
-</body>
-
-`)
-
-}
-
-
-
-function saveSettings(){
-
-localStorage.speed=speed
-localStorage.font=tele.style.fontSize
-localStorage.height=readingZone.style.top
-localStorage.text=editor.value
-
-}
-
-
-
-function loadSettings(){
-
-if(localStorage.speed)
-speed=localStorage.speed
-
-if(localStorage.font)
-tele.style.fontSize=localStorage.font
-
-if(localStorage.height)
-readingZone.style.top=localStorage.height
-
-if(localStorage.text)
-editor.value=localStorage.text
-
-formatText()
-
-}
-
-loadSettings()
-
 
 
 </script>
 
 </body>
-
 </html>
