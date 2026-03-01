@@ -13,12 +13,10 @@
   --surface2: #1a1a1e;
   --border: rgba(255,255,255,0.07);
   --accent: #00e5ff;
-  --accent2: #ff3d6b;
   --red: #ff3333;
   --text: #f0f0f0;
   --muted: #666;
   --panel-w: 280px;
-  --radius: 14px;
 }
 
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
@@ -203,13 +201,7 @@ body.hide-editor #stage { height: 100vh; }
 .corner-btn:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.15); }
 #settingsBtn { left: 14px; }
 #textBtn { right: 14px; }
-
-#mirrorBtn {
-  position: absolute;
-  top: 14px;
-  right: 100px;
-  z-index: 10;
-}
+#mirrorBtn { position: absolute; top: 14px; right: 100px; z-index: 10; }
 
 .controls {
   position: fixed;
@@ -241,11 +233,8 @@ body.hide-editor #stage { height: 100vh; }
   overflow: hidden;
 }
 .ctrl-btn::after {
-  content:'';
-  position:absolute; inset:0; border-radius:50%;
-  background: white;
-  opacity:0;
-  transition: opacity .15s;
+  content:''; position:absolute; inset:0; border-radius:50%;
+  background: white; opacity:0; transition: opacity .15s;
 }
 .ctrl-btn:active::after { opacity: .15; }
 .ctrl-btn:hover { transform: scale(1.06); }
@@ -256,10 +245,7 @@ body.hide-editor #stage { height: 100vh; }
 #recBtn { background: rgba(255,51,51,.15); border-color: rgba(255,51,51,.5); color: var(--red); }
 #stopRecBtn { background: #1a1a1e; color: var(--muted); }
 
-.ctrl-divider {
-  width: 1px; height: 30px;
-  background: var(--border);
-}
+.ctrl-divider { width: 1px; height: 30px; background: var(--border); }
 
 #speed-display {
   font-family: 'DM Mono', monospace;
@@ -299,7 +285,6 @@ body.hide-editor #stage { height: 100vh; }
   background: rgba(10,10,12,.92);
   backdrop-filter: blur(24px);
   border-right: 1px solid var(--border);
-  padding: 0;
   z-index: 40;
   transition: left .35s cubic-bezier(.4,0,.2,1);
   display: flex; flex-direction: column;
@@ -326,22 +311,15 @@ body.hide-editor #stage { height: 100vh; }
   font-family: 'DM Mono', monospace;
   margin-bottom: 12px;
 }
-.panel-value {
-  float: right;
-  color: var(--accent);
-}
+.panel-value { float: right; color: var(--accent); }
 
 input[type=range] {
   -webkit-appearance: none;
-  width: 100%;
-  height: 4px;
+  width: 100%; height: 4px;
   border-radius: 2px;
   background: var(--surface2);
-  outline: none;
-  cursor: pointer;
-  margin-top: 4px;
-  clear: both;
-  display: block;
+  outline: none; cursor: pointer;
+  margin-top: 4px; clear: both; display: block;
 }
 input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -354,50 +332,31 @@ input[type=range]::-webkit-slider-thumb {
 }
 input[type=range]::-webkit-slider-thumb:active { transform: scale(1.3); }
 input[type=range]::-moz-range-thumb {
-  width: 18px; height: 18px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: none;
-  cursor: pointer;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--accent); border: none; cursor: pointer;
 }
 
-.color-row {
-  display: flex; gap: 10px; margin-top: 10px;
-}
+.color-row { display: flex; gap: 10px; margin-top: 10px; }
 .color-swatch {
-  width: 32px; height: 32px;
-  border-radius: 8px;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: all .2s;
+  width: 32px; height: 32px; border-radius: 8px;
+  cursor: pointer; border: 2px solid transparent; transition: all .2s;
 }
 .color-swatch.active { border-color: white; transform: scale(1.15); }
 
 .panel-toggle-row {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-top: 8px;
+  display: flex; align-items: center; justify-content: space-between; margin-top: 8px;
 }
-.toggle {
-  position: relative;
-  width: 40px; height: 22px;
-}
+.toggle { position: relative; width: 40px; height: 22px; }
 .toggle input { opacity:0; width:0; height:0; }
 .toggle-slider {
   position: absolute; inset: 0;
-  background: var(--surface2);
-  border-radius: 11px;
-  cursor: pointer;
-  transition: .3s;
-  border: 1px solid var(--border);
+  background: var(--surface2); border-radius: 11px;
+  cursor: pointer; transition: .3s; border: 1px solid var(--border);
 }
 .toggle-slider::before {
-  content:'';
-  position: absolute;
-  width: 16px; height: 16px;
-  left: 2px; top: 2px;
-  background: var(--muted);
-  border-radius: 50%;
-  transition: .3s;
+  content:''; position: absolute;
+  width: 16px; height: 16px; left: 2px; top: 2px;
+  background: var(--muted); border-radius: 50%; transition: .3s;
 }
 .toggle input:checked + .toggle-slider { background: rgba(0,229,255,.2); border-color: var(--accent); }
 .toggle input:checked + .toggle-slider::before { transform: translateX(18px); background: var(--accent); }
@@ -405,92 +364,57 @@ input[type=range]::-moz-range-thumb {
 #overlay {
   position: fixed; inset: 0;
   background: rgba(0,0,0,.4);
-  z-index: 35;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .35s;
-  backdrop-filter: blur(2px);
+  z-index: 35; opacity: 0; pointer-events: none;
+  transition: opacity .35s; backdrop-filter: blur(2px);
 }
 #overlay.show { opacity: 1; pointer-events: auto; }
 
 #pos-slider-wrap {
-  position: absolute;
-  right: 14px;
-  top: 50%;
+  position: absolute; right: 14px; top: 50%;
   transform: translateY(-50%);
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
+  z-index: 10; display: flex; flex-direction: column;
+  align-items: center; gap: 6px;
 }
 #pos-slider-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 9px;
-  letter-spacing: 1.5px;
-  color: var(--accent);
-  text-transform: uppercase;
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  opacity: 0.7;
+  font-family: 'DM Mono', monospace; font-size: 9px;
+  letter-spacing: 1.5px; color: var(--accent);
+  text-transform: uppercase; writing-mode: vertical-rl;
+  transform: rotate(180deg); opacity: 0.7;
 }
 #pos-slider-val {
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  color: var(--accent);
-  background: rgba(0,0,0,.6);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(0,229,255,.3);
-  border-radius: 8px;
-  padding: 3px 6px;
-  min-width: 36px;
-  text-align: center;
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  color: var(--accent); background: rgba(0,0,0,.6);
+  backdrop-filter: blur(8px); border: 1px solid rgba(0,229,255,.3);
+  border-radius: 8px; padding: 3px 6px; min-width: 36px; text-align: center;
 }
 #pos-slider-track {
-  position: relative;
-  width: 6px;
-  height: 160px;
-  background: rgba(255,255,255,.08);
-  border-radius: 3px;
-  border: 1px solid var(--border);
-  cursor: pointer;
+  position: relative; width: 6px; height: 160px;
+  background: rgba(255,255,255,.08); border-radius: 3px;
+  border: 1px solid var(--border); cursor: pointer;
 }
 #pos-slider-fill {
-  position: absolute;
-  bottom: 0;
-  left: 0; right: 0;
+  position: absolute; bottom: 0; left: 0; right: 0;
   border-radius: 3px;
   background: linear-gradient(to top, var(--accent), rgba(0,229,255,.3));
-  transition: height .1s;
-  pointer-events: none;
+  transition: height .1s; pointer-events: none;
 }
 #pos-slider-thumb {
-  position: absolute;
-  left: 50%;
+  position: absolute; left: 50%;
   transform: translate(-50%, 50%);
-  width: 18px; height: 18px;
-  border-radius: 50%;
+  width: 18px; height: 18px; border-radius: 50%;
   background: var(--accent);
   box-shadow: 0 0 10px rgba(0,229,255,.6), 0 0 20px rgba(0,229,255,.2);
   border: 2px solid rgba(255,255,255,.3);
-  cursor: grab;
-  transition: box-shadow .2s, transform .15s;
-  bottom: 0%;
+  cursor: grab; transition: box-shadow .2s, transform .15s; bottom: 0%;
 }
 #pos-slider-thumb:active { cursor: grabbing; transform: translate(-50%, 50%) scale(1.25); }
 
 #speed-touch-hint {
-  position: absolute;
-  bottom: 100px; left: 50%;
-  transform: translateX(-50%);
-  font-size: 11px;
-  color: var(--muted);
-  font-family: 'DM Mono', monospace;
-  opacity: 0;
-  transition: opacity .5s;
-  z-index: 10;
-  letter-spacing: 1px;
-  pointer-events: none;
+  position: absolute; bottom: 100px; left: 50%;
+  transform: translateX(-50%); font-size: 11px;
+  color: var(--muted); font-family: 'DM Mono', monospace;
+  opacity: 0; transition: opacity .5s; z-index: 10;
+  letter-spacing: 1px; pointer-events: none;
 }
 
 @media (max-width: 600px) {
@@ -523,7 +447,6 @@ Es distinto.</textarea>
 </div>
 
 <div id="stage">
-
   <div id="settingsBtn" class="corner-btn">⚙ Config</div>
   <div id="mirrorBtn" class="corner-btn">⇄</div>
   <div id="textBtn" class="corner-btn">✎ Script</div>
@@ -556,15 +479,14 @@ Es distinto.</textarea>
     </div>
     <div id="pos-slider-label">Posición</div>
   </div>
-
 </div>
 
 <div class="controls">
-  <button class="ctrl-btn" id="playBtn" title="Play / Pause">▶</button>
-  <button class="ctrl-btn" id="stopBtn" title="Detener">⏹</button>
+  <button class="ctrl-btn" id="playBtn">▶</button>
+  <button class="ctrl-btn" id="stopBtn">⏹</button>
   <div class="ctrl-divider"></div>
-  <button class="ctrl-btn" id="recBtn" title="Grabar (cuenta regresiva)">●</button>
-  <button class="ctrl-btn" id="stopRecBtn" title="Detener grabación">■</button>
+  <button class="ctrl-btn" id="recBtn">●</button>
+  <button class="ctrl-btn" id="stopRecBtn">■</button>
   <div class="ctrl-divider"></div>
   <div id="speed-display">VEL<span id="speed-val">120</span></div>
 </div>
@@ -573,22 +495,18 @@ Es distinto.</textarea>
 
 <div id="panel">
   <div id="panel-header">⚙ Configuración</div>
-
   <div class="panel-section">
     <div class="panel-label">Velocidad <span class="panel-value" id="speed-lbl">120 px/s</span></div>
     <input type="range" min="20" max="350" value="120" id="speedControl">
   </div>
-
   <div class="panel-section">
     <div class="panel-label">Tamaño texto <span class="panel-value" id="font-lbl">42px</span></div>
     <input type="range" min="22" max="72" value="42" id="fontControl">
   </div>
-
   <div class="panel-section">
     <div class="panel-label">Posición lectura <span class="panel-value" id="pos-lbl">38%</span></div>
     <input type="range" min="0" max="100" value="38" id="positionControl">
   </div>
-
   <div class="panel-section">
     <div class="panel-label">Color texto</div>
     <div class="color-row">
@@ -599,12 +517,10 @@ Es distinto.</textarea>
       <div class="color-swatch" style="background:#ef9a9a" data-color="#ef9a9a"></div>
     </div>
   </div>
-
   <div class="panel-section">
     <div class="panel-label">Cuenta regresiva <span class="panel-value" id="cd-lbl">5s</span></div>
     <input type="range" min="0" max="10" value="5" id="countdownControl">
   </div>
-
   <div class="panel-section">
     <div class="panel-label">Espejo cámara</div>
     <div class="panel-toggle-row">
@@ -615,7 +531,6 @@ Es distinto.</textarea>
       </label>
     </div>
   </div>
-
   <div class="panel-section">
     <div class="panel-label">Auto-play al grabar</div>
     <div class="panel-toggle-row">
@@ -643,24 +558,24 @@ let recSeconds = 0
 let isMirrored = true
 let touchStartY = null
 
-const tele = document.getElementById('teleprompter')
+const tele        = document.getElementById('teleprompter')
 const readingZone = document.getElementById('reading-zone')
-const camEl = document.getElementById('camera')
+const camEl       = document.getElementById('camera')
 const countdownEl = document.getElementById('countdown')
-const countdownNum = document.getElementById('countdown-num')
-const panel = document.getElementById('panel')
-const overlay = document.getElementById('overlay')
-const recPill = document.getElementById('rec-pill')
-const timerDisp = document.getElementById('timer-display')
-const playBtn = document.getElementById('playBtn')
-const speedVal = document.getElementById('speed-val')
+const countdownNum= document.getElementById('countdown-num')
+const panel       = document.getElementById('panel')
+const overlay     = document.getElementById('overlay')
+const recPill     = document.getElementById('rec-pill')
+const timerDisp   = document.getElementById('timer-display')
+const playBtn     = document.getElementById('playBtn')
+const speedVal    = document.getElementById('speed-val')
 
 async function initCamera() {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'user' }, audio: true })
+    const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user' }, audio:true })
     camEl.srcObject = stream
     window.appStream = stream
-  } catch (e) {
+  } catch(e) {
     console.warn('Camera error:', e)
     document.getElementById('stage').style.background = '#0a0a0c'
   }
@@ -680,19 +595,14 @@ document.getElementById('mirrorBtn').addEventListener('click', () => {
 
 function play() {
   if (isPlaying && !isPaused) {
-    isPaused = true
-    isPlaying = false
-    playBtn.innerHTML = '▶'
-    playBtn.classList.remove('playing')
+    isPaused = true; isPlaying = false
+    playBtn.innerHTML = '▶'; playBtn.classList.remove('playing')
     return
   }
   if (isPaused) {
-    isPaused = false
-    isPlaying = true
-    playBtn.innerHTML = '⏸'
-    playBtn.classList.add('playing')
-    lastTime = null
-    requestAnimationFrame(loop)
+    isPaused = false; isPlaying = true
+    playBtn.innerHTML = '⏸'; playBtn.classList.add('playing')
+    lastTime = null; requestAnimationFrame(loop)
     return
   }
   const raw = document.getElementById('editor').value
@@ -700,24 +610,19 @@ function play() {
   tele.innerText = raw
   y = readingZone.offsetHeight + 80
   tele.style.transform = `translateY(${y}px)`
-  isPlaying = true
-  isPaused = false
-  playBtn.innerHTML = '⏸'
-  playBtn.classList.add('playing')
+  isPlaying = true; isPaused = false
+  playBtn.innerHTML = '⏸'; playBtn.classList.add('playing')
   lastTime = null
   raf = requestAnimationFrame(loop)
 }
 
 function stop() {
-  isPlaying = false
-  isPaused = false
+  isPlaying = false; isPaused = false
   if (raf) cancelAnimationFrame(raf)
   y = 0
-  const raw = document.getElementById('editor').value
-  tele.innerText = raw
+  tele.innerText = document.getElementById('editor').value
   tele.style.transform = 'translateY(0)'
-  playBtn.innerHTML = '▶'
-  playBtn.classList.remove('playing')
+  playBtn.innerHTML = '▶'; playBtn.classList.remove('playing')
 }
 
 function loop(timestamp) {
@@ -735,33 +640,41 @@ document.getElementById('stopBtn').addEventListener('click', stop)
 
 document.addEventListener('keydown', e => {
   if (document.activeElement === document.getElementById('editor')) return
-  if (e.code === 'Space') { e.preventDefault(); play(); }
-  if (e.code === 'Escape') stop()
-  if (e.code === 'ArrowUp') { speed = Math.min(350, speed + 10); updateSpeedUI(); }
-  if (e.code === 'ArrowDown') { speed = Math.max(20, speed - 10); updateSpeedUI(); }
+  if (e.code === 'Space')     { e.preventDefault(); play(); }
+  if (e.code === 'Escape')    stop()
+  if (e.code === 'ArrowUp')   { speed = Math.min(350, speed+10); updateSpeedUI(); }
+  if (e.code === 'ArrowDown') { speed = Math.max(20,  speed-10); updateSpeedUI(); }
 })
 
 document.getElementById('recBtn').addEventListener('click', startCountdown)
 document.getElementById('stopRecBtn').addEventListener('click', stopRecording)
 
 function startCountdown() {
+  // ── Ocultar script y entrar en pantalla completa AL INSTANTE ──
+  document.body.classList.add('hide-editor')
+  const el = document.documentElement
+  try {
+    if      (el.requestFullscreen)       el.requestFullscreen()
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen()
+    else if (el.mozRequestFullScreen)    el.mozRequestFullScreen()
+  } catch(e) { console.warn('Fullscreen no disponible:', e) }
+
   let val = countdownSecs
   if (val === 0) { startRecording(); return; }
+
   countdownNum.innerText = val
   countdownEl.classList.add('show')
+
   const iv = setInterval(() => {
     val--
     countdownNum.innerText = val || '¡GO!'
     countdownNum.style.transform = 'scale(0.5)'
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => countdownNum.style.transform = 'scale(1)')
-    })
+    requestAnimationFrame(() => requestAnimationFrame(() =>
+      countdownNum.style.transform = 'scale(1)'
+    ))
     if (val <= 0) {
       clearInterval(iv)
-      setTimeout(() => {
-        countdownEl.classList.remove('show')
-        startRecording()
-      }, 600)
+      setTimeout(() => { countdownEl.classList.remove('show'); startRecording() }, 600)
     }
   }, 1000)
 }
@@ -771,13 +684,13 @@ function startRecording() {
   recordedChunks = []
   const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
     ? 'video/webm;codecs=vp9,opus'
-    : MediaRecorder.isTypeSupported('video/webm')
-    ? 'video/webm'
-    : 'video/mp4'
+    : MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : 'video/mp4'
+
   mediaRecorder = new MediaRecorder(window.appStream, { mimeType })
   mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data) }
   mediaRecorder.onstop = saveVideo
   mediaRecorder.start(100)
+
   recPill.classList.add('active')
   recSeconds = 0
   timerDisp.innerText = '00:00'
@@ -789,17 +702,6 @@ function startRecording() {
     timerDisp.innerText = `${m}:${s}`
   }, 1000)
 
-  // Ocultar barra de script completamente
-  document.body.classList.add('hide-editor')
-
-  // Solicitar pantalla completa para ocultar barra del navegador
-  const el = document.documentElement
-  try {
-    if (el.requestFullscreen) el.requestFullscreen()
-    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen()
-    else if (el.mozRequestFullScreen) el.mozRequestFullScreen()
-  } catch(e) { console.warn('Fullscreen no disponible:', e) }
-
   if (document.getElementById('autoPlayToggle').checked && !isPlaying) play()
 }
 
@@ -809,22 +711,20 @@ function stopRecording() {
   recPill.classList.remove('active')
   timerDisp.classList.remove('active')
 
-  // Restaurar barra de script
+  // ── Restaurar script y salir de pantalla completa ──
   document.body.classList.remove('hide-editor')
-
-  // Salir de pantalla completa
   try {
-    if (document.exitFullscreen) document.exitFullscreen()
+    if      (document.exitFullscreen)       document.exitFullscreen()
     else if (document.webkitExitFullscreen) document.webkitExitFullscreen()
-    else if (document.mozCancelFullScreen) document.mozCancelFullScreen()
+    else if (document.mozCancelFullScreen)  document.mozCancelFullScreen()
   } catch(e) {}
 }
 
 function saveVideo() {
-  const ext = (recordedChunks[0]?.type || 'video/webm').includes('mp4') ? 'mp4' : 'webm'
+  const ext  = (recordedChunks[0]?.type || 'video/webm').includes('mp4') ? 'mp4' : 'webm'
   const blob = new Blob(recordedChunks, { type: recordedChunks[0]?.type || 'video/webm' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a')
   a.href = url
   a.download = `teleprompter_${new Date().toISOString().slice(0,19).replace(/[:.]/g,'-')}.${ext}`
   a.click()
@@ -838,31 +738,26 @@ function togglePanel() {
 document.getElementById('settingsBtn').addEventListener('click', togglePanel)
 overlay.addEventListener('click', togglePanel)
 
-document.getElementById('textBtn').addEventListener('click', () => {
+document.getElementById('textBtn').addEventListener('click', () =>
   document.body.classList.toggle('hide-editor')
-})
+)
 
 function updateSpeedUI() {
   speedVal.innerText = speed
   document.getElementById('speed-lbl').innerText = speed + ' px/s'
-  document.getElementById('speedControl').value = speed
+  document.getElementById('speedControl').value  = speed
 }
 
 document.getElementById('speedControl').addEventListener('input', e => {
-  speed = parseFloat(e.target.value)
-  updateSpeedUI()
+  speed = parseFloat(e.target.value); updateSpeedUI()
 })
-
 document.getElementById('fontControl').addEventListener('input', e => {
-  const v = e.target.value
-  tele.style.fontSize = v + 'px'
-  document.getElementById('font-lbl').innerText = v + 'px'
+  tele.style.fontSize = e.target.value + 'px'
+  document.getElementById('font-lbl').innerText = e.target.value + 'px'
 })
-
-document.getElementById('positionControl').addEventListener('input', e => {
+document.getElementById('positionControl').addEventListener('input', e =>
   setPosFromPercent(parseFloat(e.target.value))
-})
-
+)
 document.getElementById('countdownControl').addEventListener('input', e => {
   countdownSecs = parseInt(e.target.value)
   document.getElementById('cd-lbl').innerText = countdownSecs + 's'
@@ -873,14 +768,13 @@ document.querySelectorAll('.color-swatch').forEach(sw => {
     document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'))
     sw.classList.add('active')
     tele.style.color = sw.dataset.color
-    if (sw.dataset.color !== '#ffffff') {
-      tele.style.textShadow = `0 0 30px rgba(0,0,0,.9), 0 0 60px rgba(0,0,0,.6), 0 0 20px ${sw.dataset.color}44`
-    } else {
-      tele.style.textShadow = '0 0 30px rgba(0,0,0,.9), 0 0 60px rgba(0,0,0,.6), 0 2px 4px rgba(0,0,0,.8)'
-    }
+    tele.style.textShadow = sw.dataset.color !== '#ffffff'
+      ? `0 0 30px rgba(0,0,0,.9),0 0 60px rgba(0,0,0,.6),0 0 20px ${sw.dataset.color}44`
+      : '0 0 30px rgba(0,0,0,.9),0 0 60px rgba(0,0,0,.6),0 2px 4px rgba(0,0,0,.8)'
   })
 })
 
+// ── POSITION SLIDER ──
 const posTrack  = document.getElementById('pos-slider-track')
 const posThumb  = document.getElementById('pos-slider-thumb')
 const posFill   = document.getElementById('pos-slider-fill')
@@ -896,51 +790,39 @@ function setPosFromPercent(pct) {
   document.getElementById('positionControl').value = pct
   document.getElementById('pos-lbl').innerText = Math.round(pct) + '%'
 }
-
 function getPctFromEvent(clientY) {
   const rect = posTrack.getBoundingClientRect()
-  const relY  = rect.bottom - clientY
-  return (relY / rect.height) * 100
+  return ((rect.bottom - clientY) / rect.height) * 100
 }
 
 posTrack.addEventListener('mousedown', e => {
-  posDragging = true
-  setPosFromPercent(getPctFromEvent(e.clientY))
-  e.preventDefault()
+  posDragging = true; setPosFromPercent(getPctFromEvent(e.clientY)); e.preventDefault()
 })
 posThumb.addEventListener('mousedown', e => {
-  posDragging = true
-  e.preventDefault()
-  e.stopPropagation()
+  posDragging = true; e.preventDefault(); e.stopPropagation()
 })
-document.addEventListener('mousemove', e => {
-  if (!posDragging) return
-  setPosFromPercent(getPctFromEvent(e.clientY))
-})
+document.addEventListener('mousemove', e => { if (posDragging) setPosFromPercent(getPctFromEvent(e.clientY)) })
 document.addEventListener('mouseup', () => { posDragging = false })
 
 posTrack.addEventListener('touchstart', e => {
-  posDragging = true
-  setPosFromPercent(getPctFromEvent(e.touches[0].clientY))
-  e.stopPropagation()
-}, { passive: true })
+  posDragging = true; setPosFromPercent(getPctFromEvent(e.touches[0].clientY)); e.stopPropagation()
+}, { passive:true })
 posThumb.addEventListener('touchstart', e => {
-  posDragging = true
-  e.stopPropagation()
-}, { passive: true })
+  posDragging = true; e.stopPropagation()
+}, { passive:true })
 document.addEventListener('touchmove', e => {
-  if (!posDragging) return
-  setPosFromPercent(getPctFromEvent(e.touches[0].clientY))
-}, { passive: true })
-document.addEventListener('touchend', () => { posDragging = false }, { passive: true })
+  if (posDragging) setPosFromPercent(getPctFromEvent(e.touches[0].clientY))
+}, { passive:true })
+document.addEventListener('touchend', () => { posDragging = false }, { passive:true })
 
+// ── TOUCH SWIPE → SPEED ──
 const stage = document.getElementById('stage')
-const hint = document.getElementById('speed-touch-hint')
+const hint  = document.getElementById('speed-touch-hint')
 let hintTimer
 
 stage.addEventListener('touchstart', e => {
   if (e.touches.length === 1) touchStartY = e.touches[0].clientY
-}, { passive: true })
+}, { passive:true })
 
 stage.addEventListener('touchmove', e => {
   if (touchStartY === null || posDragging) return
@@ -951,17 +833,18 @@ stage.addEventListener('touchmove', e => {
   clearTimeout(hintTimer)
   hint.style.opacity = '1'
   hintTimer = setTimeout(() => hint.style.opacity = '0', 1500)
-}, { passive: true })
+}, { passive:true })
 
-stage.addEventListener('touchend', () => { touchStartY = null }, { passive: true })
+stage.addEventListener('touchend', () => { touchStartY = null }, { passive:true })
 
+// ── DOUBLE TAP → PLAY ──
 let lastTap = 0
 stage.addEventListener('touchend', e => {
   if (posDragging) return
   const now = Date.now()
   if (now - lastTap < 300) play()
   lastTap = now
-}, { passive: true })
+}, { passive:true })
 </script>
 </body>
 </html>
