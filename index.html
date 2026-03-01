@@ -1,13 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <title>Teleprompter Pro</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
 
@@ -15,277 +11,394 @@ body{
 margin:0;
 background:black;
 color:white;
-font-family:'Inter',sans-serif;
-text-align:center;
-}
-
-/* ZONA TELEPROMPTER */
-
-#pantalla{
-position:fixed;
-top:5%;
-left:50%;
-transform:translateX(-50%);
-width:90%;
-height:75%;
+font-family: "Helvetica Neue", Arial;
 overflow:hidden;
-border-radius:10px;
 }
+
+/* VIDEO */
+
+#preview{
+
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+object-fit:cover;
+z-index:-1;
+
+}
+
 
 /* TEXTO */
 
-#textoTeleprompter{
+#teleprompter{
+
 position:absolute;
-width:80%;
-left:10%;
-bottom:-100%;
+width:92%;
+left:4%;
+top:85%;
 
-font-size:40px;
-line-height:1.4;
 text-align:center;
+
+font-size:38px;
+line-height:1.3;
+
+font-weight:500;
+
+text-shadow:0px 0px 8px black;
+
 }
 
-/* CONTROLES */
 
-.controles{
+/* PANEL */
+
+#panel{
+
 position:fixed;
-bottom:0;
+bottom:10px;
 width:100%;
-background:#111;
-padding:10px;
-}
+text-align:center;
 
-/* AREA TEXTO */
+background:rgba(0,0,0,0.5);
+padding:8px;
 
-textarea{
-
-width:90%;
-height:100px;
-
-font-size:18px;
-
-border-radius:10px;
-
-padding:10px;
-
-margin-bottom:10px;
+border-radius:15px;
 
 }
+
+
 
 /* BOTONES */
 
-button{
+.btn{
 
-padding:10px 20px;
+background:#1976D2;
+color:white;
+border:none;
 
-margin:5px;
+padding:10px 18px;
+margin:4px;
 
-border-radius:8px;
+border-radius:10px;
+
+font-size:15px;
+
+}
+
+.btn:active{
+
+background:#0D47A1;
+
+}
+
+
+/* TEXTO */
+
+textarea{
+
+width:95%;
+height:70px;
+
+font-size:15px;
+
+border-radius:10px;
+
+padding:6px;
 
 border:none;
 
-background:#007bff;
-
-color:white;
-
-font-size:16px;
-
-cursor:pointer;
-
 }
 
-button:hover{
-background:#0056b3;
-}
+
 
 /* SLIDERS */
 
-input[type=range]{
-width:200px;
+.slider{
+
+width:140px;
+
 }
 
-label{
-font-size:14px;
-margin:5px;
-display:block;
-}
 
-video{
-margin-top:10px;
-width:80%;
+#countdown{
+
+position:fixed;
+top:45%;
+width:100%;
+
+text-align:center;
+
+font-size:90px;
+
+font-weight:bold;
+
+display:none;
+
 }
 
 </style>
 
 </head>
 
+
 <body>
 
-<div id="pantalla">
-
-<div id="textoTeleprompter">
-
-Texto de prueba
-
-</div>
-
-</div>
 
 
+<video id="preview" autoplay muted playsinline></video>
 
-<div class="controles">
 
-<textarea id="entradaTexto" placeholder="Pega aquí tu texto listo para grabar..."></textarea>
+<div id="teleprompter"></div>
 
-<br>
 
-<button onclick="mostrarTexto()">Mostrar</button>
+<div id="countdown"></div>
 
-<button onclick="borrarTexto()">Borrar</button>
 
-<button onclick="guardarTexto()">Guardar</button>
 
-<button onclick="cargarTexto()">Cargar</button>
+<div id="panel">
+
+
+<textarea id="editor"
+placeholder="Pega aquí tu texto listo para grabar..."></textarea>
 
 <br>
 
-<label>
+
+<button class="btn" onclick="mostrar()">Mostrar</button>
+
+<button class="btn" onclick="borrar()">Borrar</button>
+
+<button class="btn" onclick="guardarTexto()">Guardar</button>
+
+<button class="btn" onclick="cargarTexto()">Cargar</button>
+
+<br>
+
 
 Velocidad
 
-<input type="range" id="velocidad" min="1" max="10" value="5">
+<input
+class="slider"
+type="range"
+min="0.2"
+max="3"
+step="0.1"
+value="1"
+id="velocidad">
 
-</label>
 
+Tamaño
 
-<label>
+<input
+class="slider"
+type="range"
+min="28"
+max="70"
+value="38"
+id="tamano">
 
-Tamaño letra
+Altura
 
-<input type="range" id="tamano" min="20" max="80" value="40">
-
-</label>
+<input
+class="slider"
+type="range"
+min="0"
+max="100"
+value="85"
+id="altura">
 
 <br>
 
-<button onclick="iniciarGrabacion()">Grabar</button>
+<button class="btn" onclick="grabar()">Grabar</button>
 
-<button onclick="detenerGrabacion()">Stop</button>
+<button class="btn" onclick="stop()">Stop</button>
 
-<br>
-
-<video id="videoPreview" controls></video>
 
 </div>
 
+
+
+
 <script>
 
-/* TEXTO */
 
-let textoDiv = document.getElementById("textoTeleprompter");
+let stream;
+let mediaRecorder;
+let chunks=[];
 
-let intervalo;
-
-/* MOSTRAR TEXTO */
-
-function mostrarTexto(){
-
-let texto = document.getElementById("entradaTexto").value;
-
-textoDiv.innerHTML = texto.replace(/\n/g,"<br>");
-
-textoDiv.style.bottom="-100%";
-
-let velocidad = document.getElementById("velocidad").value;
-
-clearInterval(intervalo);
-
-intervalo=setInterval(()=>{
-
-let actual=parseFloat(textoDiv.style.bottom);
-
-textoDiv.style.bottom=(actual+0.1*velocidad)+"%";
-
-},50);
-
-}
+let scrollInterval;
 
 
-/* BORRAR */
 
-function borrarTexto(){
+navigator.mediaDevices.getUserMedia({
 
-if(confirm("¿Borrar texto?")){
+video:true,
+audio:true
 
-document.getElementById("entradaTexto").value="";
-textoDiv.innerHTML="";
+}).then(s=>{
 
-}
+stream=s;
+
+preview.srcObject=s;
+
+});
+
+
+
+function mostrar(){
+
+teleprompter.innerText=
+editor.value;
+
+teleprompter.style.fontSize=
+tamano.value+"px";
+
+teleprompter.style.top=
+altura.value+"%";
+
+iniciarScroll();
 
 }
 
 
-/* GUARDAR */
+
+function iniciarScroll(){
+
+clearInterval(scrollInterval);
+
+let pos=altura.value;
+
+scrollInterval=setInterval(()=>{
+
+pos-=0.05*velocidad.value;
+
+teleprompter.style.top=
+pos+"%";
+
+},40);
+
+}
+
+
+
+tamano.oninput=()=>{
+
+teleprompter.style.fontSize=
+tamano.value+"px";
+
+};
+
+
+altura.oninput=()=>{
+
+teleprompter.style.top=
+altura.value+"%";
+
+};
+
+
+
+velocidad.oninput=()=>{
+
+iniciarScroll();
+
+};
+
+
+
+
+function borrar(){
+
+if(confirm("¿Borrar texto guardado?")){
+
+editor.value="";
+
+localStorage.removeItem("texto");
+
+}
+
+}
+
+
+
 
 function guardarTexto(){
 
-localStorage.setItem("teleprompterTexto",
-document.getElementById("entradaTexto").value);
+localStorage.setItem(
+"texto",
+editor.value
+);
 
 alert("Texto guardado");
 
 }
 
 
-/* CARGAR */
 
 function cargarTexto(){
 
-document.getElementById("entradaTexto").value=
-localStorage.getItem("teleprompterTexto") || "";
+editor.value=
+localStorage.getItem("texto")||"";
 
 }
 
 
 
-/* TAMAÑO */
 
-document.getElementById("tamano").oninput=function(){
+function grabar(){
 
-textoDiv.style.fontSize=this.value+"px";
+
+let c=5;
+
+countdown.style.display="block";
+
+
+let x=setInterval(()=>{
+
+countdown.innerText=c;
+
+c--;
+
+if(c<0){
+
+clearInterval(x);
+
+countdown.style.display="none";
+
+iniciarGrabacion();
+
+}
+
+},1000);
 
 }
 
 
 
-/* GRABACION */
+function iniciarGrabacion(){
 
-let mediaRecorder;
 
-let chunks=[];
-
-async function iniciarGrabacion(){
-
-let stream = await navigator.mediaDevices.getUserMedia({
-
-video:true,
-audio:true
-
-});
+chunks=[];
 
 mediaRecorder=new MediaRecorder(stream);
 
-mediaRecorder.ondataavailable=e=>chunks.push(e.data);
+
+mediaRecorder.ondataavailable=e=>{
+
+chunks.push(e.data);
+
+};
+
+
 
 mediaRecorder.onstop=e=>{
 
-let blob=new Blob(chunks,{type:"video/webm"});
+
+let blob=new Blob(chunks);
 
 let url=URL.createObjectURL(blob);
 
-document.getElementById("videoPreview").src=url;
-
-chunks=[];
 
 if(confirm("¿Guardar video?")){
 
@@ -299,19 +412,17 @@ a.click();
 
 }
 
-}
+};
+
 
 mediaRecorder.start();
 
-alert("Grabando...");
-
 }
 
 
 
-/* STOP */
 
-function detenerGrabacion(){
+function stop(){
 
 if(mediaRecorder){
 
@@ -319,9 +430,14 @@ mediaRecorder.stop();
 
 }
 
+clearInterval(scrollInterval);
+
 }
 
+
 </script>
+
+
 
 </body>
 </html>
