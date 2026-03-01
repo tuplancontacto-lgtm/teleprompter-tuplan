@@ -788,7 +788,18 @@ function startRecording() {
     const s = String(recSeconds%60).padStart(2,'0')
     timerDisp.innerText = `${m}:${s}`
   }, 1000)
+
+  // Ocultar barra de script completamente
   document.body.classList.add('hide-editor')
+
+  // Solicitar pantalla completa para ocultar barra del navegador
+  const el = document.documentElement
+  try {
+    if (el.requestFullscreen) el.requestFullscreen()
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen()
+    else if (el.mozRequestFullScreen) el.mozRequestFullScreen()
+  } catch(e) { console.warn('Fullscreen no disponible:', e) }
+
   if (document.getElementById('autoPlayToggle').checked && !isPlaying) play()
 }
 
@@ -797,7 +808,16 @@ function stopRecording() {
   clearInterval(timerInterval)
   recPill.classList.remove('active')
   timerDisp.classList.remove('active')
+
+  // Restaurar barra de script
   document.body.classList.remove('hide-editor')
+
+  // Salir de pantalla completa
+  try {
+    if (document.exitFullscreen) document.exitFullscreen()
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen()
+    else if (document.mozCancelFullScreen) document.mozCancelFullScreen()
+  } catch(e) {}
 }
 
 function saveVideo() {
