@@ -15,6 +15,7 @@ font-family: "Helvetica Neue", Arial;
 overflow:hidden;
 }
 
+
 /* VIDEO */
 
 #preview{
@@ -47,6 +48,28 @@ line-height:1.3;
 font-weight:500;
 
 text-shadow:0px 0px 8px black;
+
+}
+
+
+
+/* LINEAS GUIA */
+
+#lineas{
+
+position:fixed;
+top:15%;
+width:100%;
+display:none;
+pointer-events:none;
+
+}
+
+.guia{
+
+height:2px;
+background:rgba(255,255,255,0.8);
+margin:25px 0;
 
 }
 
@@ -86,11 +109,13 @@ font-size:15px;
 
 }
 
+
 .btn:active{
 
 background:#0D47A1;
 
 }
+
 
 
 /* TEXTO */
@@ -119,6 +144,7 @@ border:none;
 width:140px;
 
 }
+
 
 
 #countdown{
@@ -152,6 +178,19 @@ display:none;
 <div id="teleprompter"></div>
 
 
+
+<div id="lineas">
+
+<div class="guia"></div>
+
+<div class="guia"></div>
+
+<div class="guia"></div>
+
+</div>
+
+
+
 <div id="countdown"></div>
 
 
@@ -166,6 +205,8 @@ placeholder="Pega aquí tu texto listo para grabar..."></textarea>
 
 
 <button class="btn" onclick="mostrar()">Mostrar</button>
+
+<button class="btn" onclick="ajustar()">Ajustar Texto</button>
 
 <button class="btn" onclick="borrar()">Borrar</button>
 
@@ -228,6 +269,8 @@ let mediaRecorder;
 let chunks=[];
 
 let scrollInterval;
+
+let modoAjuste=false;
 
 
 
@@ -308,6 +351,27 @@ iniciarScroll();
 
 
 
+function ajustar(){
+
+modoAjuste=!modoAjuste;
+
+if(modoAjuste){
+
+lineas.style.display="block";
+
+clearInterval(scrollInterval);
+
+}else{
+
+lineas.style.display="none";
+
+}
+
+}
+
+
+
+
 function borrar(){
 
 if(confirm("¿Borrar texto guardado?")){
@@ -347,6 +411,9 @@ localStorage.getItem("texto")||"";
 
 
 function grabar(){
+
+
+lineas.style.display="none";
 
 
 let c=5;
