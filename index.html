@@ -1,295 +1,534 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
 <meta charset="UTF-8">
-<title>Teleprompter Pro</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<title>Teleprompter TuPlan PRO</title>
+
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
-body{background:#000;color:white;overflow:hidden}
 
-/* EDITOR */
-#editor-container{height:20vh;transition:.3s}
-#editor{
-  width:100%;height:100%;
-  padding:15px;
-  font-size:16px;
-  background:#111;
-  color:white;
-  border:none;
-  resize:none;
+body{
+margin:0;
+background:black;
+font-family:Arial;
+overflow:hidden;
+color:white;
 }
-.hide-editor #editor-container{height:0;overflow:hidden}
 
-/* STAGE */
-#stage{position:relative;height:80vh}
-.hide-editor #stage{height:100vh}
-
-/* VIDEO */
 video{
-  position:absolute;
-  width:100%;
-  height:100%;
-  object-fit:cover;
+position:fixed;
+width:100%;
+height:100%;
+object-fit:cover;
+z-index:-1;
 }
 
-/* TELEPROMPTER */
-#reading-zone{
-  position:absolute;
-  width:100%;
-  height:120px;
-  overflow:hidden;
-  text-align:center;
-  top:40%;
+#textoZona{
+
+position:absolute;
+width:90%;
+left:5%;
+top:10%;
+
+text-align:center;
+
 }
 
-#teleprompter{
-  font-size:40px;
-  line-height:40px;
-  max-width:85%;
-  margin:auto;
-  white-space:pre-wrap;
-  text-shadow:0 0 15px rgba(0,0,0,.9);
-  transform:translateY(0);
+.linea{
+
+font-size:42px;
+margin:12px 0;
+
+text-shadow:0px 0px 10px black;
+
 }
 
-/* CONTROLES */
-.controls{
-  position:fixed;
-  bottom:40px;
-  left:50%;
-  transform:translateX(-50%);
-  display:flex;
-  gap:15px;
-  z-index:10;
+#editorZona{
+
+position:absolute;
+top:0;
+width:100%;
+background:#000000dd;
+padding:10px;
+display:none;
+
 }
 
-button{
-  width:60px;height:60px;
-  border-radius:50%;
-  border:none;
-  font-size:20px;
-  cursor:pointer;
+textarea{
+
+width:95%;
+height:140px;
+
+font-size:18px;
+
+margin:5px;
+
 }
 
-.play{background:#444;color:white}
-.stop{background:#666;color:white}
-.rec{background:red;color:white}
-.stoprec{background:#999;color:black}
 
-/* BOTONES SUPERIORES */
-.top-btn{
-  position:absolute;
-  top:15px;
-  padding:8px 14px;
-  border-radius:20px;
-  font-size:14px;
-  cursor:pointer;
-  background:rgba(0,0,0,.6);
-  z-index:20;
-}
-#settingsBtn{left:15px}
-#textBtn{right:15px}
 
-/* PANEL */
-#panel{
-  position:fixed;
-  left:-260px;
-  top:0;
-  width:260px;
-  height:100%;
-  background:#111;
-  padding:20px;
-  transition:.3s;
-  z-index:30;
-}
-#panel.open{left:0}
-#panel input{width:100%;margin-bottom:20px}
+#botones{
 
-/* OVERLAY */
-#overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.5);
-  display:none;
-  z-index:25;
-}
-#overlay.show{display:block}
+position:fixed;
 
-/* COUNTDOWN */
-#countdown{
-  position:absolute;
-  inset:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:120px;
-  font-weight:bold;
-  background:rgba(0,0,0,.6);
-  opacity:0;
-  transition:.3s;
+bottom:70px;
+
+width:100%;
+
+text-align:center;
+
 }
-#countdown.show{opacity:1}
+
+
+
+.btn{
+
+background:#333;
+
+border:none;
+
+color:white;
+
+padding:16px;
+
+margin:6px;
+
+border-radius:50%;
+
+font-size:18px;
+
+width:60px;
+
+height:60px;
+
+}
+
+
+
+.rec{
+
+background:red;
+
+animation:none;
+
+}
+
+.recAct{
+
+animation:blink 1s infinite;
+
+}
+
+
+
+@keyframes blink{
+
+50%{opacity:0.3}
+
+}
+
+
+
+#recIndicador{
+
+position:fixed;
+
+top:10px;
+
+right:20px;
+
+font-size:24px;
+
+display:none;
+
+}
+
+
+
+#sliders{
+
+position:fixed;
+
+right:10px;
+
+top:120px;
+
+background:#000000cc;
+
+padding:10px;
+
+border-radius:12px;
+
+}
+
+
+
+.slider{
+
+width:120px;
+
+}
+
+
+
+#contador{
+
+position:fixed;
+
+top:50%;
+
+left:50%;
+
+transform:translate(-50%,-50%);
+
+font-size:120px;
+
+display:none;
+
+}
+
 </style>
+
 </head>
 
 <body>
 
-<div id="editor-container">
+<video id="camara" autoplay muted></video>
+
+<div id="recIndicador">
+
+🔴 REC
+
+</div>
+
+<div id="contador">
+
+5
+
+</div>
+
+
+<div id="editorZona">
+
 <textarea id="editor">
-“La Isapre es más cara…”
 
-Depende.
+Pega aquí tu texto
 
-Si ganas 1.800.000,
-tu 7% son 126.000.
-
-Con eso puedes tener acceso
-a clínicas privadas,
-reembolsos en menos de 48 horas,
-y beneficios adicionales.
-
-No es más caro.
-Es distinto.
 </textarea>
+
+<br>
+
+<button onclick="guardarTexto()">Guardar</button>
+
+<button onclick="borrarTexto()">Borrar</button>
+
 </div>
 
-<div id="stage">
 
-<div id="settingsBtn" class="top-btn">⚙</div>
-<div id="textBtn" class="top-btn">Texto</div>
 
-<video id="camera" autoplay playsinline muted></video>
+<div id="textoZona">
 
-<div id="reading-zone">
-<div id="teleprompter"></div>
+<div class="linea" id="l1"></div>
+
+<div class="linea" id="l2"></div>
+
+<div class="linea" id="l3"></div>
+
 </div>
 
-<div id="countdown">5</div>
+
+
+<div id="botones">
+
+<button class="btn" onclick="play()">▶</button>
+
+<button class="btn" onclick="pausa()">⏸</button>
+
+<button class="btn rec" id="recBtn" onclick="grabar()">●</button>
+
+<button class="btn" onclick="stop()">■</button>
+
+<button class="btn" onclick="mostrarTexto()">T</button>
+
+<button class="btn" onclick="mostrarSliders()">⚙</button>
+
 </div>
 
-<div class="controls">
-<button class="play" id="playBtn">▶</button>
-<button class="stop" id="stopBtn">⏹</button>
-<button class="rec" id="recBtn">●</button>
-<button class="stoprec" id="stopRecBtn">■</button>
+
+
+<div id="sliders">
+
+Velocidad<br>
+
+<input type="range" min="0.2" max="3" step="0.1" value="1" id="vel" class="slider">
+
+<br><br>
+
+Tamaño<br>
+
+<input type="range" min="30" max="80" value="42" id="tam" class="slider">
+
+<br><br>
+
+Altura<br>
+
+<input type="range" min="0" max="100" value="10" id="alt" class="slider">
+
 </div>
 
-<div id="overlay"></div>
-
-<div id="panel">
-<h3>Configuración</h3>
-<label>Velocidad</label>
-<input type="range" min="50" max="300" value="120" id="speedControl">
-<label>Tamaño Texto</label>
-<input type="range" min="28" max="60" value="40" id="fontControl">
-<label>Altura</label>
-<input type="range" min="5" max="70" value="40" id="positionControl">
-</div>
 
 <script>
-let speed=120
-let y=0
-let isPlaying=false
-let lastTime=null
-let mediaRecorder=null
-let recordedChunks=[]
-let countdownValue=5
 
-const tele=document.getElementById("teleprompter")
-const readingZone=document.getElementById("reading-zone")
-const video=document.getElementById("camera")
-const countdownEl=document.getElementById("countdown")
-const panel=document.getElementById("panel")
-const overlay=document.getElementById("overlay")
+let lineas=[]
+let pos=0
 
-/* BOTONES */
-document.getElementById("playBtn").addEventListener("click",play)
-document.getElementById("stopBtn").addEventListener("click",()=>isPlaying=false)
-document.getElementById("recBtn").addEventListener("click",startCountdown)
-document.getElementById("stopRecBtn").addEventListener("click",stopRecording)
-document.getElementById("settingsBtn").addEventListener("click",togglePanel)
-document.getElementById("textBtn").addEventListener("click",()=>document.body.classList.toggle("hide-editor"))
-overlay.addEventListener("click",togglePanel)
+let velocidad=1
 
-document.getElementById("speedControl").addEventListener("input",e=>speed=parseFloat(e.target.value))
-document.getElementById("fontControl").addEventListener("input",e=>tele.style.fontSize=e.target.value+"px")
-document.getElementById("positionControl").addEventListener("input",e=>readingZone.style.top=e.target.value+"%")
+let intervalo
 
-function togglePanel(){
-  panel.classList.toggle("open")
-  overlay.classList.toggle("show")
-}
+let recorder
 
-/* CAMARA */
-navigator.mediaDevices.getUserMedia({video:true,audio:true})
-.then(stream=>{
-  video.srcObject=stream
-  window.stream=stream
+let chunks=[]
+
+
+navigator.mediaDevices.getUserMedia({
+video:true,
+audio:true
 })
 
+.then(stream=>{
+
+camara.srcObject=stream
+
+recorder=new MediaRecorder(stream)
+
+recorder.ondataavailable=e=>chunks.push(e.data)
+
+recorder.onstop=e=>{
+
+let blob=new Blob(chunks)
+
+chunks=[]
+
+if(confirm("Guardar video?")){
+
+let a=document.createElement("a")
+
+a.href=URL.createObjectURL(blob)
+
+a.download="video-"+Date.now()+".webm"
+
+a.click()
+
+}
+
+}
+
+})
+
+
+function prepararTexto(){
+
+let t=editor.value
+
+.replace(/\n/g," ")
+
+.split(" ")
+
+let frases=[]
+
+let temp=""
+
+t.forEach(p=>{
+
+temp+=p+" "
+
+if(temp.length>30){
+
+frases.push(temp)
+
+temp=""
+
+}
+
+})
+
+lineas=frases
+
+pos=0
+
+}
+
+
+
+function mostrarLineas(){
+
+l1.innerText=lineas[pos]||""
+
+l2.innerText=lineas[pos+1]||""
+
+l3.innerText=lineas[pos+2]||""
+
+}
+
+
+
 function play(){
-  const raw=document.getElementById("editor").value
-  if(!raw.trim()) return
-  tele.innerText=raw
-  y=readingZone.offsetHeight+150
-  tele.style.transform=`translateY(${y}px)`
-  isPlaying=true
-  lastTime=null
-  requestAnimationFrame(loop)
+
+prepararTexto()
+
+clearInterval(intervalo)
+
+intervalo=setInterval(()=>{
+
+pos++
+
+mostrarLineas()
+
+},2000/velocidad)
+
 }
 
-function loop(timestamp){
-  if(!isPlaying)return
-  if(!lastTime)lastTime=timestamp
-  const delta=(timestamp-lastTime)/1000
-  lastTime=timestamp
-  y-=speed*delta
-  tele.style.transform=`translateY(${y}px)`
-  requestAnimationFrame(loop)
+
+
+function pausa(){
+
+clearInterval(intervalo)
+
 }
 
-function startCountdown(){
-  countdownValue=5
-  countdownEl.innerText=countdownValue
-  countdownEl.classList.add("show")
 
-  const interval=setInterval(()=>{
-    countdownValue--
-    countdownEl.innerText=countdownValue
-    if(countdownValue<=0){
-      clearInterval(interval)
-      countdownEl.classList.remove("show")
-      startRecording()
-    }
-  },1000)
+
+function stop(){
+
+clearInterval(intervalo)
+
+pos=0
+
+mostrarLineas()
+
 }
 
-function startRecording(){
-  if(!window.stream)return
-  recordedChunks=[]
-  mediaRecorder=new MediaRecorder(window.stream)
-  mediaRecorder.ondataavailable=e=>{
-    if(e.data.size>0)recordedChunks.push(e.data)
-  }
-  mediaRecorder.onstop=()=>{
-    const blob=new Blob(recordedChunks,{type:"video/webm"})
-    const url=URL.createObjectURL(blob)
-    const a=document.createElement("a")
-    a.href=url
-    a.download="video_"+Date.now()+".webm"
-    a.click()
-  }
-  mediaRecorder.start()
+
+
+function grabar(){
+
+document.getElementById("sliders").style.display="none"
+
+let c=5
+
+contador.style.display="block"
+
+contador.innerText=c
+
+let t=setInterval(()=>{
+
+c--
+
+contador.innerText=c
+
+if(c==0){
+
+clearInterval(t)
+
+contador.style.display="none"
+
+recorder.start()
+
+recIndicador.style.display="block"
+
+recBtn.classList.add("recAct")
+
+play()
+
 }
 
-function stopRecording(){
-  if(mediaRecorder && mediaRecorder.state!=="inactive"){
-    mediaRecorder.stop()
-  }
+},1000)
+
 }
+
+
+
+function mostrarTexto(){
+
+let e=editorZona
+
+e.style.display=e.style.display=="none"?"block":"none"
+
+}
+
+
+
+function mostrarSliders(){
+
+let s=sliders
+
+s.style.display=s.style.display=="none"?"block":"none"
+
+}
+
+
+
+function guardarTexto(){
+
+localStorage.setItem("texto",editor.value)
+
+alert("Texto guardado")
+
+}
+
+
+
+function borrarTexto(){
+
+editor.value=""
+
+alert("Texto borrado")
+
+}
+
+
+
+window.onload=()=>{
+
+editor.value=localStorage.getItem("texto")||""
+
+mostrarLineas()
+
+}
+
+
+
+vel.oninput=()=>{
+
+velocidad=vel.value
+
+}
+
+
+
+tam.oninput=()=>{
+
+let t=tam.value
+
+document.querySelectorAll(".linea").forEach(l=>l.style.fontSize=t+"px")
+
+}
+
+
+
+alt.oninput=()=>{
+
+textoZona.style.top=alt.value+"%"
+
+}
+
+
+
 </script>
+
 
 </body>
 </html>
