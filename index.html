@@ -4,7 +4,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Teleprompter TuPlan</title>
+<title>Teleprompter PRO</title>
 
 <style>
 
@@ -12,35 +12,40 @@ body{
 margin:0;
 background:black;
 color:white;
-font-family:Arial,Helvetica,sans-serif;
+font-family:Arial;
 overflow:hidden;
 }
+
 
 /* VIDEO */
 
 video{
+
 position:fixed;
 width:100%;
 height:100%;
 object-fit:cover;
+
 z-index:1;
+
 }
 
 
-/* TEXTO PROMPTER */
+/* PROMPTER */
 
 #prompterBox{
 
 position:fixed;
 
 left:50%;
+
 transform:translateX(-50%);
 
-width:70%;
+top:8%;
 
-top:10%;
+width:60%;
 
-height:220px;
+height:230px;
 
 overflow:hidden;
 
@@ -50,42 +55,33 @@ pointer-events:none;
 
 }
 
-/* FADE SUPERIOR */
+
+/* FADE */
 
 .fadeTop{
 
 position:absolute;
 top:0;
 width:100%;
-height:50px;
+height:60px;
+background:linear-gradient(black,transparent);
 
-background:linear-gradient(
-to bottom,
-black,
-transparent);
-
-z-index:5;
 }
 
-/* FADE INFERIOR */
 
 .fadeBottom{
 
 position:absolute;
 bottom:0;
 width:100%;
-height:50px;
+height:60px;
+background:linear-gradient(transparent,black);
 
-background:linear-gradient(
-to top,
-black,
-transparent);
-
-z-index:5;
 }
 
 
-/* TEXTO SCROLL */
+
+/* TEXTO */
 
 #scrollText{
 
@@ -95,11 +91,14 @@ width:100%;
 
 text-align:center;
 
-font-size:36px;
+font-size:42px;
 
 line-height:70px;
 
+font-weight:600;
+
 }
+
 
 
 /* PANEL */
@@ -108,7 +107,7 @@ line-height:70px;
 
 position:fixed;
 
-bottom:10px;
+bottom:20px;
 
 width:100%;
 
@@ -119,15 +118,16 @@ z-index:6;
 }
 
 
+
 /* BOTONES */
 
 .btn{
 
-padding:10px 16px;
+padding:12px 20px;
 
-margin:4px;
+margin:5px;
 
-border-radius:10px;
+border-radius:12px;
 
 border:none;
 
@@ -135,15 +135,17 @@ background:#1e88e5;
 
 color:white;
 
-font-size:16px;
+font-size:18px;
 
 }
 
-.btn:active{
 
-background:#0d47a1;
+.stopBtn{
+
+background:red;
 
 }
+
 
 
 /* TEXTO AREA */
@@ -156,11 +158,11 @@ top:0;
 
 width:100%;
 
-height:90px;
+height:80px;
 
 z-index:7;
 
-font-size:16px;
+font-size:18px;
 
 padding:10px;
 
@@ -171,18 +173,69 @@ outline:none;
 }
 
 
+
 /* SLIDERS */
 
 .sliders{
 
-margin-top:5px;
+margin-top:10px;
 
 }
 
 
+
 input[type=range]{
 
-width:150px;
+width:200px;
+
+}
+
+
+
+/* SLIDER VERTICAL */
+
+.vertical{
+
+position:fixed;
+
+right:10px;
+
+top:120px;
+
+height:300px;
+
+z-index:8;
+
+}
+
+
+.vertical input{
+
+transform:rotate(270deg);
+
+width:300px;
+
+}
+
+
+
+/* VIDEO PLAYER */
+
+#player{
+
+position:fixed;
+
+top:0;
+left:0;
+
+width:100%;
+height:100%;
+
+background:black;
+
+display:none;
+
+z-index:20;
 
 }
 
@@ -194,11 +247,9 @@ width:150px;
 <body>
 
 
-
 <textarea id="editor"
-placeholder="Pega aquí tu texto listo para grabar...">
+placeholder="Pega aquí tu texto listo para grabar">
 </textarea>
-
 
 
 <video id="video" autoplay muted playsinline></video>
@@ -234,16 +285,17 @@ Borrar
 </button>
 
 
-
 <button class="btn" onclick="grabar()">
 
-REC
+Grabar
 
 </button>
 
 
-
-<button class="btn" onclick="detener()">
+<button class="btn stopBtn"
+id="stopBtn"
+onclick="detener()"
+style="display:none">
 
 STOP
 
@@ -251,7 +303,7 @@ STOP
 
 
 
-<div class="sliders">
+<div class="sliders" id="sliders">
 
 
 Velocidad
@@ -276,11 +328,11 @@ Tamaño
 
 type="range"
 
-min="24"
+min="30"
 
-max="70"
+max="80"
 
-value="36">
+value="42">
 
 
 
@@ -294,11 +346,19 @@ min="0"
 
 max="100"
 
-value="20">
+value="10">
+
+
+</div>
+
+</div>
 
 
 
-Ancho
+<!-- SLIDER AJUSTE TEXTO -->
+
+<div class="vertical" id="sliderTexto">
+
 
 <input id="ancho"
 
@@ -308,13 +368,16 @@ min="40"
 
 max="95"
 
-value="70">
-
-
+value="60">
 
 </div>
 
-</div>
+
+
+<!-- PLAYER -->
+
+<video id="player" controls></video>
+
 
 
 
@@ -323,6 +386,8 @@ value="70">
 
 let video=document.getElementById("video");
 
+let stream;
+
 navigator.mediaDevices.getUserMedia({
 
 video:true,
@@ -330,32 +395,29 @@ audio:true
 
 })
 
-.then(stream=>{
+.then(s=>{
 
-video.srcObject=stream;
+stream=s;
 
-mediaStream=stream;
+video.srcObject=s;
 
 });
 
 
-
 let y=0;
-
 let corriendo=false;
 
 let mediaRecorder;
-
 let chunks=[];
 
 
-/* MOSTRAR TEXTO */
+/* MOSTRAR */
 
 function mostrar(){
 
-let texto=document.getElementById("editor").value;
+let texto=editor.value;
 
-document.getElementById("scrollText").innerText=texto;
+scrollText.innerText=texto;
 
 y=300;
 
@@ -364,18 +426,18 @@ scrollText.style.top=y+"px";
 }
 
 
+
 /* BORRAR */
 
 function borrar(){
 
 editor.value="";
-
 scrollText.innerText="";
 
 }
 
 
-/* SCROLL REAL */
+/* SCROLL */
 
 function animar(){
 
@@ -384,7 +446,7 @@ if(!corriendo) return;
 
 let velocidad=
 
-document.getElementById("velocidad").value;
+velocidadInput.value;
 
 
 y-=velocidad;
@@ -397,6 +459,7 @@ requestAnimationFrame(animar);
 }
 
 
+
 /* GRABAR */
 
 function grabar(){
@@ -406,17 +469,22 @@ corriendo=true;
 animar();
 
 
+sliders.style.display="none";
+
+sliderTexto.style.display="none";
+
+editor.style.display="none";
+
+
+stopBtn.style.display="inline-block";
+
+
 chunks=[];
-
-
-let recorderStream=
-
-video.srcObject;
 
 
 mediaRecorder=
 
-new MediaRecorder(recorderStream);
+new MediaRecorder(stream);
 
 
 mediaRecorder.ondataavailable=e=>{
@@ -424,6 +492,7 @@ mediaRecorder.ondataavailable=e=>{
 chunks.push(e.data);
 
 };
+
 
 
 mediaRecorder.onstop=e=>{
@@ -441,17 +510,11 @@ let url=
 URL.createObjectURL(blob);
 
 
-if(confirm("Guardar video?")){
+player.src=url;
 
-let a=document.createElement("a");
+player.style.display="block";
 
-a.href=url;
-
-a.download="video.webm";
-
-a.click();
-
-}
+player.play();
 
 };
 
@@ -470,11 +533,23 @@ corriendo=false;
 
 mediaRecorder.stop();
 
+
+stopBtn.style.display="none";
+
+sliders.style.display="block";
+
+sliderTexto.style.display="block";
+
+editor.style.display="block";
+
 }
 
 
 
-/* SLIDERS TIEMPO REAL */
+/* SLIDERS */
+
+let velocidadInput=document.getElementById("velocidad");
+
 
 setInterval(()=>{
 
@@ -484,22 +559,21 @@ scrollText.style.fontSize=
 tamano.value+"px";
 
 
-prompterBox.style.width=
-
-ancho.value+"%";
-
-
 prompterBox.style.top=
 
 altura.value+"%";
 
 
+prompterBox.style.width=
+
+ancho.value+"%";
+
+
 },200);
 
 
+
 </script>
-
-
 
 </body>
 </html>
