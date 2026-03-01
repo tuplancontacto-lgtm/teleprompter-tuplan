@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap');
+
 :root {
   --bg: #080808;
   --surface: #111113;
@@ -17,7 +18,9 @@
   --muted: #666;
   --panel-w: 280px;
 }
+
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
 html, body {
   width:100%; height:100%;
   background: var(--bg);
@@ -28,6 +31,7 @@ html, body {
   user-select: none;
   -webkit-font-smoothing: antialiased;
 }
+
 #editor-wrap {
   position: relative;
   height: 22vh; min-height: 80px;
@@ -37,6 +41,7 @@ html, body {
   overflow: hidden;
 }
 body.hide-editor #editor-wrap { height: 0; }
+
 #editor-label {
   position: absolute; top:10px; left:14px;
   font-size:10px; letter-spacing:2px;
@@ -51,18 +56,21 @@ body.hide-editor #editor-wrap { height: 0; }
   font-size:15px; line-height:1.6;
   font-family:'DM Mono',monospace;
 }
+
 #stage {
   position:relative; height:78vh;
   transition:height .3s ease;
   overflow:hidden; background:#111;
 }
 body.hide-editor #stage { height:100vh; }
+
 #camera {
   position:absolute; inset:0;
   width:100%; height:100%;
   object-fit:cover;
   transform:scaleX(-1);
 }
+
 #stage::before {
   content:''; position:absolute; inset:0;
   background:linear-gradient(to bottom,
@@ -70,6 +78,7 @@ body.hide-editor #stage { height:100vh; }
     rgba(0,0,0,.1) 75%, rgba(0,0,0,.5) 100%);
   z-index:1; pointer-events:none;
 }
+
 #cam-msg {
   position:absolute; inset:0;
   display:flex; flex-direction:column;
@@ -84,6 +93,7 @@ body.hide-editor #stage { height:100vh; }
   border:none; border-radius:10px;
   font-size:15px; font-weight:600; cursor:pointer;
 }
+
 #reading-zone {
   position:absolute; width:100%; height:160px;
   overflow:hidden; top:38%; z-index:5; pointer-events:none;
@@ -97,6 +107,7 @@ body.hide-editor #stage { height:100vh; }
 }
 #reading-zone::before { top:0; }
 #reading-zone::after  { bottom:0; }
+
 #teleprompter {
   font-family:'DM Sans',Arial,sans-serif;
   font-weight:600; font-size:42px; line-height:1.25;
@@ -106,6 +117,7 @@ body.hide-editor #stage { height:100vh; }
   will-change:transform;
   transform:translateZ(0);
 }
+
 #status-bar {
   position:absolute; top:14px; left:50%;
   transform:translateX(-50%);
@@ -127,6 +139,7 @@ body.hide-editor #stage { height:100vh; }
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 #timer-display { opacity:0;transition:opacity .3s;color:var(--text); }
 #timer-display.active { opacity:1; }
+
 .corner-btn {
   position:absolute; top:14px; z-index:10;
   background:rgba(0,0,0,.75);
@@ -139,6 +152,7 @@ body.hide-editor #stage { height:100vh; }
 #settingsBtn { left:14px; }
 #textBtn     { right:14px; }
 #mirrorBtn   { position:absolute;top:14px;right:100px;z-index:10; }
+
 .controls {
   position:fixed; bottom:28px; left:50%;
   transform:translateX(-50%);
@@ -166,6 +180,7 @@ body.hide-editor #stage { height:100vh; }
   color:var(--muted); text-align:center; min-width:36px; line-height:1.3;
 }
 #speed-display span { display:block;font-size:16px;color:var(--text); }
+
 #countdown {
   position:absolute;inset:0;
   display:flex;align-items:center;justify-content:center;
@@ -176,6 +191,7 @@ body.hide-editor #stage { height:100vh; }
 #countdown.show{opacity:1;pointer-events:auto;}
 #countdown-num{transform:scale(.5);transition:transform .2s cubic-bezier(.34,1.56,.64,1);}
 #countdown.show #countdown-num{transform:scale(1);}
+
 #panel {
   position:fixed; left:calc(-1 * var(--panel-w) - 10px);
   top:0;bottom:0; width:var(--panel-w);
@@ -227,11 +243,13 @@ input[type=range]::-moz-range-thumb{
 }
 .toggle input:checked + .toggle-slider{background:rgba(0,229,255,.2);border-color:var(--accent);}
 .toggle input:checked + .toggle-slider::before{transform:translateX(18px);background:var(--accent);}
+
 #overlay{
   position:fixed;inset:0;background:rgba(0,0,0,.5);
   z-index:35;opacity:0;pointer-events:none;transition:opacity .3s;
 }
 #overlay.show{opacity:1;pointer-events:auto;}
+
 #pos-slider-wrap{
   position:absolute;right:14px;top:50%;
   transform:translateY(-50%);
@@ -264,11 +282,13 @@ input[type=range]::-moz-range-thumb{
   cursor:grab;bottom:0%;
 }
 #pos-slider-thumb:active{cursor:grabbing;}
+
 #speed-touch-hint{
   position:absolute;bottom:100px;left:50%;transform:translateX(-50%);
   font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;
   opacity:0;transition:opacity .5s;z-index:10;letter-spacing:1px;pointer-events:none;
 }
+
 @media(max-width:600px){
   #teleprompter{font-size:32px;max-width:95%;}
   .ctrl-btn{width:46px;height:46px;font-size:16px;}
@@ -279,67 +299,81 @@ input[type=range]::-moz-range-thumb{
 </style>
 </head>
 <body>
+
 <div id="editor-wrap">
   <span id="editor-label">SCRIPT</span>
-  <textarea id="editor">"La Isapre es mas cara..."
+  <textarea id="editor">"La Isapre es más cara…"
+
 Depende.
+
 Si ganas 1.800.000,
 tu 7% son 126.000.
+
 Con eso puedes tener acceso
-a clinicas privadas,
+a clínicas privadas,
 reembolsos en menos de 48 horas,
 y beneficios adicionales.
-No es mas caro.
+
+No es más caro.
 Es distinto.</textarea>
 </div>
+
 <div id="stage">
-  <div id="settingsBtn" class="corner-btn">&#9881; Config</div>
-  <div id="mirrorBtn"   class="corner-btn">&#8644;</div>
-  <div id="textBtn"     class="corner-btn">&#9998; Script</div>
+  <div id="settingsBtn" class="corner-btn">⚙ Config</div>
+  <div id="mirrorBtn"   class="corner-btn">⇄</div>
+  <div id="textBtn"     class="corner-btn">✎ Script</div>
+
   <div id="status-bar">
     <div id="rec-pill" class="status-pill"><div id="rec-dot"></div><span>REC</span></div>
     <div id="timer-display" class="status-pill">00:00</div>
   </div>
+
   <video id="camera" autoplay playsinline muted></video>
+
   <div id="cam-msg" style="display:none">
-    <h2>Camara no disponible</h2>
-    <p id="cam-err-text">Permite el acceso a camara y microfono en tu navegador.</p>
+    <h2>📷 Cámara no disponible</h2>
+    <p id="cam-err-text">Permite el acceso a cámara y micrófono en tu navegador.</p>
     <button class="retry-btn" id="retryBtn">Reintentar</button>
   </div>
+
   <div id="reading-zone"><div id="teleprompter"></div></div>
   <div id="countdown"><div id="countdown-num">5</div></div>
-  <div id="speed-touch-hint">DESLIZA PARA VELOCIDAD</div>
+  <div id="speed-touch-hint">↕ DESLIZA PARA VELOCIDAD</div>
+
   <div id="pos-slider-wrap">
     <div id="pos-slider-val">38%</div>
     <div id="pos-slider-track">
       <div id="pos-slider-fill" style="height:38%"></div>
       <div id="pos-slider-thumb" style="bottom:38%"></div>
     </div>
-    <div id="pos-slider-label">Posicion</div>
+    <div id="pos-slider-label">Posición</div>
   </div>
 </div>
+
 <div class="controls">
-  <button class="ctrl-btn" id="playBtn">&#9654;</button>
-  <button class="ctrl-btn" id="stopBtn">&#9209;</button>
+  <button class="ctrl-btn" id="playBtn">▶</button>
+  <button class="ctrl-btn" id="stopBtn">⏹</button>
   <div class="ctrl-divider"></div>
-  <button class="ctrl-btn" id="recBtn">&#9679;</button>
-  <button class="ctrl-btn" id="stopRecBtn">&#9632;</button>
+  <button class="ctrl-btn" id="recBtn">●</button>
+  <button class="ctrl-btn" id="stopRecBtn">■</button>
   <div class="ctrl-divider"></div>
   <div id="speed-display">VEL<span id="speed-val">120</span></div>
 </div>
+
 <div id="overlay"></div>
+
 <div id="panel">
-  <div id="panel-header">&#9881; Configuracion</div>
+  <div id="panel-header">⚙ Configuración</div>
   <div class="panel-section">
     <div class="panel-label">Velocidad <span class="panel-value" id="speed-lbl">120 px/s</span></div>
     <input type="range" min="20" max="350" value="120" id="speedControl">
   </div>
   <div class="panel-section">
-    <div class="panel-label">Tamano texto <span class="panel-value" id="font-lbl">42px</span></div>
+    <div class="panel-label">Tamaño texto <span class="panel-value" id="font-lbl">42px</span></div>
     <input type="range" min="22" max="72" value="42" id="fontControl">
   </div>
   <div class="panel-section">
-    <div class="panel-label">Posicion lectura <span class="panel-value" id="pos-lbl">38%</span></div>
+    <div class="panel-label">Posición lectura <span class="panel-value" id="pos-lbl">38%</span></div>
     <input type="range" min="0" max="100" value="38" id="positionControl">
   </div>
   <div class="panel-section">
@@ -357,7 +391,7 @@ Es distinto.</textarea>
     <input type="range" min="0" max="10" value="5" id="countdownControl">
   </div>
   <div class="panel-section">
-    <div class="panel-label">Espejo camara</div>
+    <div class="panel-label">Espejo cámara</div>
     <div class="panel-toggle-row">
       <span style="font-size:13px;color:var(--muted)">Voltear imagen</span>
       <label class="toggle">
@@ -377,52 +411,16 @@ Es distinto.</textarea>
     </div>
   </div>
 </div>
+
 <script>
 'use strict'
-// ── CONFIGURACION POR DEFECTO ──
-const DEFAULTS = {
-  speed: 120,
-  fontSize: 42,
-  position: 38,
-  countdown: 5,
-  mirror: true,
-  autoPlay: true,
-  textColor: '#ffffff',
-  scriptText: ''
-}
-// ── PERSISTENCIA CON localStorage ──
-function saveConfig() {
-  const config = {
-    speed: speed,
-    fontSize: parseInt(tele.style.fontSize) || 42,
-    position: parseFloat(readingZone.style.top) || 38,
-    countdown: countdownSecs,
-    mirror: isMirrored,
-    autoPlay: document.getElementById('autoPlayToggle').checked,
-    textColor: tele.style.color || '#ffffff',
-    scriptText: document.getElementById('editor').value
-  }
-  try {
-    localStorage.setItem('teleprompter_config', JSON.stringify(config))
-  } catch(e) {
-    console.warn('No se pudo guardar configuracion:', e)
-  }
-}
-function loadConfig() {
-  try {
-    const raw = localStorage.getItem('teleprompter_config')
-    if (!raw) return null
-    return JSON.parse(raw)
-  } catch(e) {
-    console.warn('No se pudo cargar configuracion:', e)
-    return null
-  }
-}
+
 let speed=120, y=0, isPlaying=false, isPaused=false
 let lastTime=null, raf=null
 let mediaRecorder=null, recordedChunks=[]
 let countdownSecs=5, timerInterval=null, recSeconds=0
 let isMirrored=true, touchStartY=null, posDragging=false
+
 const tele        = document.getElementById('teleprompter')
 const readingZone = document.getElementById('reading-zone')
 const camEl       = document.getElementById('camera')
@@ -442,58 +440,8 @@ const posFill     = document.getElementById('pos-slider-fill')
 const posValLbl   = document.getElementById('pos-slider-val')
 const stage       = document.getElementById('stage')
 const hint        = document.getElementById('speed-touch-hint')
-// ── RESTAURAR CONFIGURACION GUARDADA ──
-function applyConfig(cfg) {
-  if (!cfg) return
-  // Velocidad
-  if (cfg.speed !== undefined) {
-    speed = cfg.speed
-    updateSpeedUI()
-  }
-  // Tamano de texto
-  if (cfg.fontSize !== undefined) {
-    tele.style.fontSize = cfg.fontSize + 'px'
-    document.getElementById('fontControl').value = cfg.fontSize
-    document.getElementById('font-lbl').textContent = cfg.fontSize + 'px'
-  }
-  // Posicion de lectura
-  if (cfg.position !== undefined) {
-    setPosFromPercent(cfg.position)
-  }
-  // Cuenta regresiva
-  if (cfg.countdown !== undefined) {
-    countdownSecs = cfg.countdown
-    document.getElementById('countdownControl').value = countdownSecs
-    document.getElementById('cd-lbl').textContent = countdownSecs + 's'
-  }
-  // Espejo
-  if (cfg.mirror !== undefined) {
-    isMirrored = cfg.mirror
-    document.getElementById('mirrorToggle').checked = isMirrored
-    setMirror(isMirrored)
-  }
-  // Auto-play
-  if (cfg.autoPlay !== undefined) {
-    document.getElementById('autoPlayToggle').checked = cfg.autoPlay
-  }
-  // Color de texto
-  if (cfg.textColor !== undefined) {
-    tele.style.color = cfg.textColor
-    document.querySelectorAll('.color-swatch').forEach(sw => {
-      sw.classList.toggle('active', sw.dataset.color === cfg.textColor)
-    })
-    if (cfg.textColor !== '#ffffff') {
-      tele.style.textShadow = '0 2px 8px rgba(0,0,0,.95),0 0 12px ' + cfg.textColor + '66'
-    } else {
-      tele.style.textShadow = '0 2px 8px rgba(0,0,0,.95),0 0 20px rgba(0,0,0,.7)'
-    }
-  }
-  // Script guardado
-  if (cfg.scriptText) {
-    document.getElementById('editor').value = cfg.scriptText
-  }
-}
-// ── CAMARA con fallback progresivo ──
+
+// ── CÁMARA con fallback progresivo ──
 async function initCamera() {
   const constraints = [
     { video:{ facingMode:'user', width:{ideal:640}, height:{ideal:480} }, audio:true },
@@ -510,86 +458,95 @@ async function initCamera() {
       camEl.style.display  = 'block'
       return
     } catch(e) {
-      console.warn('Intento',i,'fallo:',e.name,e.message)
+      console.warn('Intento',i,'falló:',e.name,e.message)
       if (i===constraints.length-1) showCamError(e)
     }
   }
 }
+
 function showCamError(e) {
   camEl.style.display  = 'none'
   camMsg.style.display = 'flex'
   const msgs = {
-    NotAllowedError:     'Permiso denegado. Ve a Configuracion del navegador > Permisos > Camara y Microfono > Permitir para este sitio.',
-    NotFoundError:       'No se encontro camara. Verifica que tu dispositivo tenga camara disponible.',
-    NotReadableError:    'La camara esta siendo usada por otra app. Cierra otras apps que usen la camara.',
-    OverconstrainedError:'Tu camara no soporta la configuracion solicitada.',
-    SecurityError:       'Necesita HTTPS. Abre el archivo desde un servidor web (ej: Vercel, GitHub Pages).',
-    TypeError:           'Tu navegador no soporta camara. Usa Chrome o Firefox actualizados.'
+    NotAllowedError:     '🔒 Permiso denegado. Ve a Configuración del navegador → Permisos → Cámara y Micrófono → Permitir para este sitio.',
+    NotFoundError:       '🔍 No se encontró cámara. Verifica que tu dispositivo tenga cámara disponible.',
+    NotReadableError:    '⚠️ La cámara está siendo usada por otra app. Cierra otras apps que usen la cámara.',
+    OverconstrainedError:'⚙️ Tu cámara no soporta la configuración solicitada.',
+    SecurityError:       '🔐 Necesita HTTPS. Abre el archivo desde un servidor web (ej: Vercel, GitHub Pages).',
+    TypeError:           '🌐 Tu navegador no soporta cámara. Usa Chrome o Firefox actualizados.'
   }
-  camErrText.textContent = msgs[e.name] || ('Error: ' + e.name + ' - ' + e.message)
+  camErrText.textContent = msgs[e.name] || ('Error: ' + e.name + ' — ' + e.message)
 }
+
 document.getElementById('retryBtn').addEventListener('click', initCamera)
 initCamera()
+
 // ── ESPEJO ──
 function setMirror(val) {
   isMirrored = val
   camEl.style.transform = val ? 'scaleX(-1)' : 'scaleX(1)'
-  saveConfig()
 }
 document.getElementById('mirrorToggle').addEventListener('change', e => setMirror(e.target.checked))
 document.getElementById('mirrorBtn').addEventListener('click', () => {
   isMirrored = !isMirrored; setMirror(isMirrored)
   document.getElementById('mirrorToggle').checked = isMirrored
 })
+
 // ── PLAY / PAUSA ──
 function play() {
   if (isPlaying && !isPaused) {
     isPaused=true; isPlaying=false
-    playBtn.textContent='\u25B6'; playBtn.classList.remove('playing'); return
+    playBtn.textContent='▶'; playBtn.classList.remove('playing'); return
   }
   if (isPaused) {
     isPaused=false; isPlaying=true
-    playBtn.textContent='\u23F8'; playBtn.classList.add('playing')
+    playBtn.textContent='⏸'; playBtn.classList.add('playing')
     lastTime=null; raf=requestAnimationFrame(loop); return
   }
   const raw = document.getElementById('editor').value
   if (!raw.trim()) return
   tele.textContent = raw
   y = readingZone.offsetHeight + 80
-  tele.style.transform = 'translateZ(0) translateY(' + y + 'px)'
+  tele.style.transform = `translateZ(0) translateY(${y}px)`
   isPlaying=true; isPaused=false
-  playBtn.textContent='\u23F8'; playBtn.classList.add('playing')
+  playBtn.textContent='⏸'; playBtn.classList.add('playing')
   lastTime=null; raf=requestAnimationFrame(loop)
 }
+
 function stop() {
   isPlaying=false; isPaused=false
   if(raf){cancelAnimationFrame(raf);raf=null}
   y=0
   tele.textContent = document.getElementById('editor').value
   tele.style.transform = 'translateZ(0) translateY(0)'
-  playBtn.textContent='\u25B6'; playBtn.classList.remove('playing')
+  playBtn.textContent='▶'; playBtn.classList.remove('playing')
 }
+
 function loop(ts) {
   if(!isPlaying) return
   if(!lastTime) lastTime=ts
   const delta = Math.min(ts-lastTime, 100) / 1000
   lastTime=ts
   y -= speed * delta
-  tele.style.transform = 'translateZ(0) translateY(' + y + 'px)'
+  tele.style.transform = `translateZ(0) translateY(${y}px)`
   raf=requestAnimationFrame(loop)
 }
+
 playBtn.addEventListener('click', play)
 document.getElementById('stopBtn').addEventListener('click', stop)
+
 document.addEventListener('keydown', e => {
   if(document.activeElement===document.getElementById('editor')) return
   if(e.code==='Space')    {e.preventDefault();play()}
   if(e.code==='Escape')   stop()
-  if(e.code==='ArrowUp')  {speed=Math.min(350,speed+10);updateSpeedUI();saveConfig()}
-  if(e.code==='ArrowDown'){speed=Math.max(20, speed-10);updateSpeedUI();saveConfig()}
+  if(e.code==='ArrowUp')  {speed=Math.min(350,speed+10);updateSpeedUI()}
+  if(e.code==='ArrowDown'){speed=Math.max(20, speed-10);updateSpeedUI()}
 })
-// ── GRABACION ──
+
+// ── GRABACIÓN ──
 document.getElementById('recBtn').addEventListener('click', startCountdown)
 document.getElementById('stopRecBtn').addEventListener('click', stopRecording)
+
 function startCountdown() {
   document.body.classList.add('hide-editor')
   const el=document.documentElement
@@ -598,13 +555,14 @@ function startCountdown() {
     else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen()
     else if(el.mozRequestFullScreen)    el.mozRequestFullScreen()
   } catch(e){}
+
   let val=countdownSecs
   if(val===0){startRecording();return}
   countdownNum.textContent=val
   countdownEl.classList.add('show')
   const iv=setInterval(()=>{
     val--
-    countdownNum.textContent=val||'GO!'
+    countdownNum.textContent=val||'¡GO!'
     countdownNum.style.transform='scale(.5)'
     requestAnimationFrame(()=>requestAnimationFrame(()=>
       countdownNum.style.transform='scale(1)'
@@ -615,77 +573,28 @@ function startCountdown() {
     }
   },1000)
 }
+
 function startRecording() {
   if(!window.appStream){
-    alert('No hay camara. Permite el acceso primero.')
+    alert('No hay cámara. Permite el acceso primero.')
     document.body.classList.remove('hide-editor')
     return
   }
-  // Crear un stream combinado: video del canvas/camara + audio del microfono
-  let recordStream = null
-  try {
-    // Capturar el video del stage completo (camara + overlay del teleprompter)
-    const stageEl = document.getElementById('stage')
-    const canvas = document.createElement('canvas')
-    canvas.width = stageEl.offsetWidth || 640
-    canvas.height = stageEl.offsetHeight || 480
-    const ctx = canvas.getContext('2d')
-    // Funcion para dibujar frames
-    let drawInterval = null
-    function drawFrame() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      // Dibujar video de la camara
-      if (isMirrored) {
-        ctx.save()
-        ctx.scale(-1, 1)
-        ctx.drawImage(camEl, -canvas.width, 0, canvas.width, canvas.height)
-        ctx.restore()
-      } else {
-        ctx.drawImage(camEl, 0, 0, canvas.width, canvas.height)
-      }
-    }
-    drawInterval = setInterval(drawFrame, 1000/30) // 30 fps
-    window._drawInterval = drawInterval
-    const canvasStream = canvas.captureStream(30)
-    // Agregar tracks de audio si existen
-    const audioTracks = window.appStream.getAudioTracks()
-    if (audioTracks.length > 0) {
-      audioTracks.forEach(track => canvasStream.addTrack(track))
-    }
-    recordStream = canvasStream
-  } catch(e) {
-    console.warn('No se pudo crear canvas stream, usando stream directo:', e)
-    recordStream = window.appStream
-  }
   recordedChunks=[]
-  const types=['video/webm;codecs=vp8,opus','video/webm;codecs=vp9,opus','video/webm','video/mp4','']
+  const types=['video/webm;codecs=vp8,opus','video/webm','video/mp4','']
   const mimeType=types.find(t=>!t||MediaRecorder.isTypeSupported(t))||''
-  const opts=mimeType?{mimeType,videoBitsPerSecond:2500000}:{}
-  try { mediaRecorder=new MediaRecorder(recordStream,opts) }
+  const opts=mimeType?{mimeType,videoBitsPerSecond:1500000}:{}
+
+  try { mediaRecorder=new MediaRecorder(window.appStream,opts) }
   catch(e) {
-    try { mediaRecorder=new MediaRecorder(recordStream) }
-    catch(e2){
-      // Fallback al stream original
-      try { mediaRecorder=new MediaRecorder(window.appStream) }
-      catch(e3){ alert('No se puede grabar: '+e3.message); return }
-    }
+    try { mediaRecorder=new MediaRecorder(window.appStream) }
+    catch(e2){ alert('No se puede grabar: '+e2.message); return }
   }
-  mediaRecorder.ondataavailable=e=>{
-    if(e.data && e.data.size>0) recordedChunks.push(e.data)
-  }
-  mediaRecorder.onstop=()=>{
-    // Limpiar el intervalo de dibujo del canvas
-    if (window._drawInterval) {
-      clearInterval(window._drawInterval)
-      window._drawInterval = null
-    }
-    saveVideo()
-  }
-  mediaRecorder.onerror=e=>{
-    console.error('Error en grabacion:', e)
-    alert('Error durante la grabacion: ' + (e.error ? e.error.message : 'desconocido'))
-  }
+
+  mediaRecorder.ondataavailable=e=>{if(e.data.size>0)recordedChunks.push(e.data)}
+  mediaRecorder.onstop=saveVideo
   mediaRecorder.start(500)
+
   recPill.classList.add('active')
   recSeconds=0; timerDisp.textContent='00:00'; timerDisp.classList.add('active')
   timerInterval=setInterval(()=>{
@@ -694,8 +603,10 @@ function startRecording() {
       String(Math.floor(recSeconds/60)).padStart(2,'0')+':'+
       String(recSeconds%60).padStart(2,'0')
   },1000)
+
   if(document.getElementById('autoPlayToggle').checked && !isPlaying) play()
 }
+
 function stopRecording() {
   if(mediaRecorder&&mediaRecorder.state!=='inactive') mediaRecorder.stop()
   clearInterval(timerInterval)
@@ -707,36 +618,19 @@ function stopRecording() {
     else if(document.mozCancelFullScreen)  document.mozCancelFullScreen()
   } catch(e){}
 }
+
 function saveVideo() {
-  if (recordedChunks.length === 0) {
-    alert('No se grabaron datos. Intenta de nuevo.')
-    return
-  }
-  const mime = recordedChunks[0].type || 'video/webm'
-  const ext = mime.includes('mp4') ? 'mp4' : 'webm'
-  const blob = new Blob(recordedChunks, {type: mime})
-  if (blob.size === 0) {
-    alert('El archivo grabado esta vacio. Intenta de nuevo.')
-    return
-  }
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.style.display = 'none'
-  a.href = url
-  a.download = 'teleprompter_' + new Date().toISOString().slice(0,19).replace(/[:.]/g,'-') + '.' + ext
-  // CORRECCION: Agregar el enlace al DOM antes de hacer click
-  // Esto es necesario para que funcione en todos los navegadores (Safari, Firefox, Chrome)
-  document.body.appendChild(a)
-  // Usar setTimeout para asegurar que el DOM se actualice antes del click
-  setTimeout(function() {
-    a.click()
-    // Limpiar: remover el enlace y revocar la URL despues de un tiempo
-    setTimeout(function() {
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-    }, 10000)
-  }, 100)
+  const mime=recordedChunks[0]?.type||'video/webm'
+  const ext=mime.includes('mp4')?'mp4':'webm'
+  const blob=new Blob(recordedChunks,{type:mime})
+  const url=URL.createObjectURL(blob)
+  const a=document.createElement('a')
+  a.href=url
+  a.download=`teleprompter_${new Date().toISOString().slice(0,19).replace(/[:.]/g,'-')}.${ext}`
+  a.click()
+  setTimeout(()=>URL.revokeObjectURL(url),8000)
 }
+
 // ── PANEL ──
 function togglePanel(){panel.classList.toggle('open');overlay.classList.toggle('show')}
 document.getElementById('settingsBtn').addEventListener('click',togglePanel)
@@ -744,46 +638,34 @@ overlay.addEventListener('click',togglePanel)
 document.getElementById('textBtn').addEventListener('click',()=>
   document.body.classList.toggle('hide-editor')
 )
+
 function updateSpeedUI(){
   speedVal.textContent=speed
   document.getElementById('speed-lbl').textContent=speed+' px/s'
   document.getElementById('speedControl').value=speed
 }
-document.getElementById('speedControl').addEventListener('input',e=>{
-  speed=parseFloat(e.target.value);updateSpeedUI();saveConfig()
-})
+document.getElementById('speedControl').addEventListener('input',e=>{speed=parseFloat(e.target.value);updateSpeedUI()})
 document.getElementById('fontControl').addEventListener('input',e=>{
   tele.style.fontSize=e.target.value+'px'
   document.getElementById('font-lbl').textContent=e.target.value+'px'
-  saveConfig()
 })
-document.getElementById('positionControl').addEventListener('input',e=>{
-  setPosFromPercent(parseFloat(e.target.value));saveConfig()
-})
+document.getElementById('positionControl').addEventListener('input',e=>setPosFromPercent(parseFloat(e.target.value)))
 document.getElementById('countdownControl').addEventListener('input',e=>{
   countdownSecs=parseInt(e.target.value)
   document.getElementById('cd-lbl').textContent=countdownSecs+'s'
-  saveConfig()
 })
+
 document.querySelectorAll('.color-swatch').forEach(sw=>{
   sw.addEventListener('click',()=>{
     document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active'))
     sw.classList.add('active'); tele.style.color=sw.dataset.color
     tele.style.textShadow=sw.dataset.color!=='#ffffff'
-      ?'0 2px 8px rgba(0,0,0,.95),0 0 12px '+sw.dataset.color+'66'
+      ?`0 2px 8px rgba(0,0,0,.95),0 0 12px ${sw.dataset.color}66`
       :'0 2px 8px rgba(0,0,0,.95),0 0 20px rgba(0,0,0,.7)'
-    saveConfig()
   })
 })
-// Guardar script cuando cambia el texto
-document.getElementById('editor').addEventListener('input', function() {
-  saveConfig()
-})
-// Guardar config cuando cambia auto-play
-document.getElementById('autoPlayToggle').addEventListener('change', function() {
-  saveConfig()
-})
-// ── SLIDER POSICION ──
+
+// ── SLIDER POSICIÓN ──
 function setPosFromPercent(pct){
   pct=Math.max(0,Math.min(100,pct))
   readingZone.style.top=pct+'%'
@@ -800,12 +682,13 @@ function getPctFromEvent(clientY){
 posTrack.addEventListener('mousedown',e=>{posDragging=true;setPosFromPercent(getPctFromEvent(e.clientY));e.preventDefault()})
 posThumb.addEventListener('mousedown',e=>{posDragging=true;e.preventDefault();e.stopPropagation()})
 document.addEventListener('mousemove',e=>{if(posDragging)setPosFromPercent(getPctFromEvent(e.clientY))})
-document.addEventListener('mouseup',()=>{if(posDragging){posDragging=false;saveConfig()}})
+document.addEventListener('mouseup',()=>{posDragging=false})
 posTrack.addEventListener('touchstart',e=>{posDragging=true;setPosFromPercent(getPctFromEvent(e.touches[0].clientY));e.stopPropagation()},{passive:true})
 posThumb.addEventListener('touchstart',e=>{posDragging=true;e.stopPropagation()},{passive:true})
 document.addEventListener('touchmove',e=>{if(posDragging)setPosFromPercent(getPctFromEvent(e.touches[0].clientY))},{passive:true})
-document.addEventListener('touchend',()=>{if(posDragging){posDragging=false;saveConfig()}},{passive:true})
-// ── DESLIZ VELOCIDAD ──
+document.addEventListener('touchend',()=>{posDragging=false},{passive:true})
+
+// ── DESLIZ → VELOCIDAD ──
 let hintTimer
 stage.addEventListener('touchstart',e=>{
   if(e.touches.length===1)touchStartY=e.touches[0].clientY
@@ -820,11 +703,9 @@ stage.addEventListener('touchmove',e=>{
   hint.style.opacity='1'
   hintTimer=setTimeout(()=>hint.style.opacity='0',1500)
 },{passive:true})
-stage.addEventListener('touchend',()=>{
-  if(touchStartY!==null) saveConfig()
-  touchStartY=null
-},{passive:true})
-// ── DOBLE TAP PLAY ──
+stage.addEventListener('touchend',()=>{touchStartY=null},{passive:true})
+
+// ── DOBLE TAP → PLAY ──
 let lastTap=0
 stage.addEventListener('touchend',e=>{
   if(posDragging)return
@@ -832,13 +713,11 @@ stage.addEventListener('touchend',e=>{
   if(now-lastTap<300)play()
   lastTap=now
 },{passive:true})
+
 // ── Pausa en background ──
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden)lastTime=null
 })
-// ── CARGAR CONFIG AL INICIAR ──
-const savedConfig = loadConfig()
-applyConfig(savedConfig)
 </script>
 </body>
 </html>
