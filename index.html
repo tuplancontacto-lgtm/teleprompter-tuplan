@@ -296,6 +296,43 @@ input[type=range]::-moz-range-thumb{
   .ctrl-divider{display:none;}
   .controls{gap:8px;padding:8px 14px;}
 }
+
+/* ── MODO GRABACIÓN: pantalla completa inmersiva ── */
+body.rec-mode #editor-wrap { height:0 !important; }
+body.rec-mode #stage {
+  position: fixed !important;
+  inset: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
+  z-index: 100 !important;
+}
+body.rec-mode #teleprompter {
+  font-size: 62px !important;
+  max-width: 92% !important;
+}
+@media(max-width:600px){
+  body.rec-mode #teleprompter { font-size: 44px !important; }
+}
+body.rec-mode #settingsBtn,
+body.rec-mode #mirrorBtn,
+body.rec-mode #textBtn { display:none !important; }
+body.rec-mode .controls {
+  bottom: 16px !important;
+  background: rgba(0,0,0,.35) !important;
+  border-color: rgba(255,255,255,.08) !important;
+  z-index: 200 !important;
+}
+body.rec-mode .ctrl-btn {
+  width: 40px !important;
+  height: 40px !important;
+  font-size: 14px !important;
+  opacity: 0.6 !important;
+}
+body.rec-mode #recBtn,
+body.rec-mode #stopBtn,
+body.rec-mode .ctrl-divider:first-of-type { display:none !important; }
+body.rec-mode #pos-slider-wrap { z-index:200 !important; }
+body.rec-mode #status-bar { z-index:200 !important; }
 </style>
 </head>
 <body>
@@ -415,11 +452,48 @@ Es distinto.</textarea>
 <script>
 'use strict'
 
-let speed=120, y=0, isPlaying=false, isPaused=false
+function loadSettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem('tp_settings') || '{}')
+    return {
+      speed:     s.speed     ?? 120,
+      fontSize:  s.fontSize  ?? 42,
+      position:  s.position  ?? 38,
+      countdown: s.countdown ?? 5,
+      mirror:    s.mirror    ?? true,
+      autoPlay:  s.autoPlay  ?? true,
+      color:     s.color     ?? '#ffffff'
+    }
+  } catch(e) {
+    return { speed:120, fontSize:42, position:38, countdown:5, mirror:true, autoPlay:true, color:'#ffffff' }
+  }
+}
+
+function saveSettings() {
+  try {
+    localStorage.setItem('tp_settings', JSON.stringify({
+      speed,
+      fontSize:  parseFloat(document.getElementById('fontControl').value),
+      position:  parseFloat(document.getElementById('positionControl').value),
+      countdown: countdownSecs,
+      mirror:    isMirrored,
+      autoPlay:  document.getElementById('autoPlayToggle').checked,
+      color:     currentColor
+    }))
+  } catch(e) {}
+}
+
+const S = loadSettings()
+
+let speed        = S.speed
+let countdownSecs= S.countdown
+let isMirrored   = S.mirror
+let currentColor = S.color
+let y=0, isPlaying=false, isPaused=false
 let lastTime=null, raf=null
 let mediaRecorder=null, recordedChunks=[]
-let countdownSecs=5, timerInterval=null, recSeconds=0
-let isMirrored=true, touchStartY=null, posDragging=false
+let timerInterval=null, recSeconds=0
+let touchStartY=null, posDragging=false
 
 const tele        = document.getElementById('teleprompter')
 const readingZone = document.getElementById('reading-zone')
@@ -441,7 +515,27 @@ const posValLbl   = document.getElementById('pos-slider-val')
 const stage       = document.getElementById('stage')
 const hint        = document.getElementById('speed-touch-hint')
 
-// ── CÁMARA con fallback progresivo ──
+function applySettings() {
+  updateSpeedUI()
+  tele.style.fontSize = S.fontSize + 'px'
+  document.getElementById('fontControl').value = S.fontSize
+  document.getElementById('font-lbl').textContent = S.fontSize + 'px'
+  document.getElementById('positionControl').value = S.position
+  setPosFromPercent(S.position)
+  document.getElementById('countdownControl').value = S.countdown
+  document.getElementById('cd-lbl').textContent = S.countdown + 's'
+  document.getElementById('mirrorToggle').checked = S.mirror
+  setMirror(S.mirror)
+  document.getElementById('autoPlayToggle').checked = S.autoPlay
+  tele.style.color = S.color
+  if (S.color !== '#ffffff') {
+    tele.style.textShadow = `0 2px 8px rgba(0,0,0,.95),0 0 12px ${S.color}66`
+  }
+  document.querySelectorAll('.color-swatch').forEach(sw => {
+    sw.classList.toggle('active', sw.dataset.color === S.color)
+  })
+}
+
 async function initCamera() {
   const constraints = [
     { video:{ facingMode:'user', width:{ideal:640}, height:{ideal:480} }, audio:true },
@@ -481,18 +575,19 @@ function showCamError(e) {
 document.getElementById('retryBtn').addEventListener('click', initCamera)
 initCamera()
 
-// ── ESPEJO ──
 function setMirror(val) {
   isMirrored = val
   camEl.style.transform = val ? 'scaleX(-1)' : 'scaleX(1)'
 }
-document.getElementById('mirrorToggle').addEventListener('change', e => setMirror(e.target.checked))
+document.getElementById('mirrorToggle').addEventListener('change', e => {
+  setMirror(e.target.checked); saveSettings()
+})
 document.getElementById('mirrorBtn').addEventListener('click', () => {
   isMirrored = !isMirrored; setMirror(isMirrored)
   document.getElementById('mirrorToggle').checked = isMirrored
+  saveSettings()
 })
 
-// ── PLAY / PAUSA ──
 function play() {
   if (isPlaying && !isPaused) {
     isPaused=true; isPlaying=false
@@ -539,185 +634,231 @@ document.addEventListener('keydown', e => {
   if(document.activeElement===document.getElementById('editor')) return
   if(e.code==='Space')    {e.preventDefault();play()}
   if(e.code==='Escape')   stop()
-  if(e.code==='ArrowUp')  {speed=Math.min(350,speed+10);updateSpeedUI()}
-  if(e.code==='ArrowDown'){speed=Math.max(20, speed-10);updateSpeedUI()}
+  if(e.code==='ArrowUp')  {speed=Math.min(350,speed+10);updateSpeedUI();saveSettings()}
+  if(e.code==='ArrowDown'){speed=Math.max(20, speed-10);updateSpeedUI();saveSettings()}
 })
 
-// ── GRABACIÓN ──
 document.getElementById('recBtn').addEventListener('click', startCountdown)
 document.getElementById('stopRecBtn').addEventListener('click', stopRecording)
 
+function goFullscreen() {
+  const el = document.documentElement
+  const fn = el.requestFullscreen || el.webkitRequestFullscreen ||
+             el.mozRequestFullScreen || el.msRequestFullscreen
+  if (fn) fn.call(el).catch(()=>{})
+}
+
+function exitFullscreen() {
+  const fn = document.exitFullscreen || document.webkitExitFullscreen ||
+             document.mozCancelFullScreen || document.msExitFullscreen
+  if (fn) fn.call(document).catch(()=>{})
+}
+
 function startCountdown() {
   document.body.classList.add('hide-editor')
-  const el=document.documentElement
-  try {
-    if     (el.requestFullscreen)       el.requestFullscreen()
-    else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen()
-    else if(el.mozRequestFullScreen)    el.mozRequestFullScreen()
-  } catch(e){}
+  document.body.classList.add('rec-mode')
+  goFullscreen()
 
-  let val=countdownSecs
-  if(val===0){startRecording();return}
-  countdownNum.textContent=val
+  let val = countdownSecs
+  if(val===0){ startRecording(); return }
+  countdownNum.textContent = val
   countdownEl.classList.add('show')
-  const iv=setInterval(()=>{
+  const iv = setInterval(()=>{
     val--
-    countdownNum.textContent=val||'¡GO!'
-    countdownNum.style.transform='scale(.5)'
+    countdownNum.textContent = val || '¡GO!'
+    countdownNum.style.transform = 'scale(.5)'
     requestAnimationFrame(()=>requestAnimationFrame(()=>
-      countdownNum.style.transform='scale(1)'
+      countdownNum.style.transform = 'scale(1)'
     ))
     if(val<=0){
       clearInterval(iv)
-      setTimeout(()=>{countdownEl.classList.remove('show');startRecording()},600)
+      setTimeout(()=>{ countdownEl.classList.remove('show'); startRecording() }, 600)
     }
-  },1000)
+  }, 1000)
 }
 
 function startRecording() {
   if(!window.appStream){
     alert('No hay cámara. Permite el acceso primero.')
     document.body.classList.remove('hide-editor')
+    document.body.classList.remove('rec-mode')
     return
   }
-  recordedChunks=[]
-  const types=['video/webm;codecs=vp8,opus','video/webm','video/mp4','']
-  const mimeType=types.find(t=>!t||MediaRecorder.isTypeSupported(t))||''
-  const opts=mimeType?{mimeType,videoBitsPerSecond:1500000}:{}
+  recordedChunks = []
 
-  try { mediaRecorder=new MediaRecorder(window.appStream,opts) }
-  catch(e) {
-    try { mediaRecorder=new MediaRecorder(window.appStream) }
-    catch(e2){ alert('No se puede grabar: '+e2.message); return }
+  const types = [
+    'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+    'video/mp4',
+    'video/webm;codecs=vp8,opus',
+    'video/webm'
+  ]
+  let mimeType = ''
+  for (const t of types) {
+    try { if (MediaRecorder.isTypeSupported(t)) { mimeType = t; break } } catch(e){}
   }
 
-  mediaRecorder.ondataavailable=e=>{if(e.data.size>0)recordedChunks.push(e.data)}
-  mediaRecorder.onstop=saveVideo
-  mediaRecorder.start(500)
+  let mr
+  try {
+    mr = new MediaRecorder(window.appStream, mimeType
+      ? { mimeType, videoBitsPerSecond: 6000000, audioBitsPerSecond: 128000 }
+      : {})
+  } catch(e) {
+    try { mr = new MediaRecorder(window.appStream) }
+    catch(e2){ alert('No se puede grabar: ' + e2.message); return }
+  }
+  mediaRecorder = mr
+
+  mediaRecorder.ondataavailable = e => {
+    if (e.data && e.data.size > 0) recordedChunks.push(e.data)
+  }
+  mediaRecorder.onstop = saveVideo
+  mediaRecorder.start(300)
 
   recPill.classList.add('active')
-  recSeconds=0; timerDisp.textContent='00:00'; timerDisp.classList.add('active')
-  timerInterval=setInterval(()=>{
+  recSeconds = 0
+  timerDisp.textContent = '00:00'
+  timerDisp.classList.add('active')
+  timerInterval = setInterval(()=>{
     recSeconds++
-    timerDisp.textContent=
-      String(Math.floor(recSeconds/60)).padStart(2,'0')+':'+
+    timerDisp.textContent =
+      String(Math.floor(recSeconds/60)).padStart(2,'0') + ':' +
       String(recSeconds%60).padStart(2,'0')
-  },1000)
+  }, 1000)
 
   if(document.getElementById('autoPlayToggle').checked && !isPlaying) play()
 }
 
 function stopRecording() {
-  if(mediaRecorder&&mediaRecorder.state!=='inactive') mediaRecorder.stop()
+  if(mediaRecorder && mediaRecorder.state !== 'inactive') {
+    try { mediaRecorder.requestData() } catch(e){}
+    mediaRecorder.stop()
+  }
   clearInterval(timerInterval)
-  recPill.classList.remove('active'); timerDisp.classList.remove('active')
+  recPill.classList.remove('active')
+  timerDisp.classList.remove('active')
   document.body.classList.remove('hide-editor')
-  try {
-    if     (document.exitFullscreen)       document.exitFullscreen()
-    else if(document.webkitExitFullscreen) document.webkitExitFullscreen()
-    else if(document.mozCancelFullScreen)  document.mozCancelFullScreen()
-  } catch(e){}
+  document.body.classList.remove('rec-mode')
+  exitFullscreen()
 }
 
 function saveVideo() {
-  const mime=recordedChunks[0]?.type||'video/webm'
-  const ext=mime.includes('mp4')?'mp4':'webm'
-  const blob=new Blob(recordedChunks,{type:mime})
-  const url=URL.createObjectURL(blob)
-  const a=document.createElement('a')
-  a.href=url
-  a.download=`teleprompter_${new Date().toISOString().slice(0,19).replace(/[:.]/g,'-')}.${ext}`
+  if (!recordedChunks.length) {
+    alert('La grabación está vacía. Verifica permisos de cámara.')
+    return
+  }
+  const mime = recordedChunks[0].type || 'video/mp4'
+  const ext  = mime.includes('mp4') ? 'mp4' : 'webm'
+  const blob = new Blob(recordedChunks, { type: mime })
+  if (blob.size < 500) {
+    alert('El archivo grabado está vacío. Intenta de nuevo.')
+    return
+  }
+  const url = URL.createObjectURL(blob)
+  const a   = document.createElement('a')
+  a.href    = url
+  a.download= 'teleprompter_' +
+    new Date().toISOString().slice(0,19).replace(/[:.]/g,'-') + '.' + ext
+  document.body.appendChild(a)
   a.click()
-  setTimeout(()=>URL.revokeObjectURL(url),8000)
+  document.body.removeChild(a)
+  setTimeout(()=> URL.revokeObjectURL(url), 10000)
 }
 
-// ── PANEL ──
-function togglePanel(){panel.classList.toggle('open');overlay.classList.toggle('show')}
-document.getElementById('settingsBtn').addEventListener('click',togglePanel)
-overlay.addEventListener('click',togglePanel)
-document.getElementById('textBtn').addEventListener('click',()=>
+function togglePanel(){ panel.classList.toggle('open'); overlay.classList.toggle('show') }
+document.getElementById('settingsBtn').addEventListener('click', togglePanel)
+overlay.addEventListener('click', togglePanel)
+document.getElementById('textBtn').addEventListener('click', ()=>
   document.body.classList.toggle('hide-editor')
 )
 
-function updateSpeedUI(){
-  speedVal.textContent=speed
-  document.getElementById('speed-lbl').textContent=speed+' px/s'
-  document.getElementById('speedControl').value=speed
+function updateSpeedUI() {
+  speedVal.textContent = speed
+  document.getElementById('speed-lbl').textContent = speed + ' px/s'
+  document.getElementById('speedControl').value = speed
 }
-document.getElementById('speedControl').addEventListener('input',e=>{speed=parseFloat(e.target.value);updateSpeedUI()})
-document.getElementById('fontControl').addEventListener('input',e=>{
-  tele.style.fontSize=e.target.value+'px'
-  document.getElementById('font-lbl').textContent=e.target.value+'px'
+
+document.getElementById('speedControl').addEventListener('input', e=>{
+  speed = parseFloat(e.target.value); updateSpeedUI(); saveSettings()
 })
-document.getElementById('positionControl').addEventListener('input',e=>setPosFromPercent(parseFloat(e.target.value)))
-document.getElementById('countdownControl').addEventListener('input',e=>{
-  countdownSecs=parseInt(e.target.value)
-  document.getElementById('cd-lbl').textContent=countdownSecs+'s'
+document.getElementById('fontControl').addEventListener('input', e=>{
+  tele.style.fontSize = e.target.value + 'px'
+  document.getElementById('font-lbl').textContent = e.target.value + 'px'
+  saveSettings()
 })
+document.getElementById('positionControl').addEventListener('input', e=>{
+  setPosFromPercent(parseFloat(e.target.value)); saveSettings()
+})
+document.getElementById('countdownControl').addEventListener('input', e=>{
+  countdownSecs = parseInt(e.target.value)
+  document.getElementById('cd-lbl').textContent = countdownSecs + 's'
+  saveSettings()
+})
+document.getElementById('autoPlayToggle').addEventListener('change', ()=> saveSettings())
 
 document.querySelectorAll('.color-swatch').forEach(sw=>{
   sw.addEventListener('click',()=>{
     document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active'))
-    sw.classList.add('active'); tele.style.color=sw.dataset.color
-    tele.style.textShadow=sw.dataset.color!=='#ffffff'
-      ?`0 2px 8px rgba(0,0,0,.95),0 0 12px ${sw.dataset.color}66`
-      :'0 2px 8px rgba(0,0,0,.95),0 0 20px rgba(0,0,0,.7)'
+    sw.classList.add('active')
+    currentColor = sw.dataset.color
+    tele.style.color = currentColor
+    tele.style.textShadow = currentColor !== '#ffffff'
+      ? `0 2px 8px rgba(0,0,0,.95),0 0 12px ${currentColor}66`
+      : '0 2px 8px rgba(0,0,0,.95),0 0 20px rgba(0,0,0,.7)'
+    saveSettings()
   })
 })
 
-// ── SLIDER POSICIÓN ──
 function setPosFromPercent(pct){
-  pct=Math.max(0,Math.min(100,pct))
-  readingZone.style.top=pct+'%'
-  posThumb.style.bottom=pct+'%'
-  posFill.style.height=pct+'%'
-  posValLbl.textContent=Math.round(pct)+'%'
-  document.getElementById('positionControl').value=pct
-  document.getElementById('pos-lbl').textContent=Math.round(pct)+'%'
+  pct = Math.max(0, Math.min(100, pct))
+  readingZone.style.top = pct+'%'
+  posThumb.style.bottom = pct+'%'
+  posFill.style.height  = pct+'%'
+  posValLbl.textContent = Math.round(pct)+'%'
+  document.getElementById('positionControl').value = pct
+  document.getElementById('pos-lbl').textContent   = Math.round(pct)+'%'
 }
 function getPctFromEvent(clientY){
-  const rect=posTrack.getBoundingClientRect()
-  return((rect.bottom-clientY)/rect.height)*100
+  const rect = posTrack.getBoundingClientRect()
+  return ((rect.bottom - clientY) / rect.height) * 100
 }
-posTrack.addEventListener('mousedown',e=>{posDragging=true;setPosFromPercent(getPctFromEvent(e.clientY));e.preventDefault()})
-posThumb.addEventListener('mousedown',e=>{posDragging=true;e.preventDefault();e.stopPropagation()})
-document.addEventListener('mousemove',e=>{if(posDragging)setPosFromPercent(getPctFromEvent(e.clientY))})
-document.addEventListener('mouseup',()=>{posDragging=false})
-posTrack.addEventListener('touchstart',e=>{posDragging=true;setPosFromPercent(getPctFromEvent(e.touches[0].clientY));e.stopPropagation()},{passive:true})
-posThumb.addEventListener('touchstart',e=>{posDragging=true;e.stopPropagation()},{passive:true})
-document.addEventListener('touchmove',e=>{if(posDragging)setPosFromPercent(getPctFromEvent(e.touches[0].clientY))},{passive:true})
-document.addEventListener('touchend',()=>{posDragging=false},{passive:true})
+posTrack.addEventListener('mousedown', e=>{ posDragging=true; setPosFromPercent(getPctFromEvent(e.clientY)); e.preventDefault() })
+posThumb.addEventListener('mousedown', e=>{ posDragging=true; e.preventDefault(); e.stopPropagation() })
+document.addEventListener('mousemove', e=>{ if(posDragging) setPosFromPercent(getPctFromEvent(e.clientY)) })
+document.addEventListener('mouseup',   ()=>{ if(posDragging){ posDragging=false; saveSettings() } })
+posTrack.addEventListener('touchstart', e=>{ posDragging=true; setPosFromPercent(getPctFromEvent(e.touches[0].clientY)); e.stopPropagation() },{passive:true})
+posThumb.addEventListener('touchstart', e=>{ posDragging=true; e.stopPropagation() },{passive:true})
+document.addEventListener('touchmove',  e=>{ if(posDragging) setPosFromPercent(getPctFromEvent(e.touches[0].clientY)) },{passive:true})
+document.addEventListener('touchend',   ()=>{ if(posDragging){ posDragging=false; saveSettings() } },{passive:true})
 
-// ── DESLIZ → VELOCIDAD ──
 let hintTimer
-stage.addEventListener('touchstart',e=>{
-  if(e.touches.length===1)touchStartY=e.touches[0].clientY
+stage.addEventListener('touchstart', e=>{
+  if(e.touches.length===1) touchStartY = e.touches[0].clientY
 },{passive:true})
-stage.addEventListener('touchmove',e=>{
-  if(touchStartY===null||posDragging)return
-  const dy=touchStartY-e.touches[0].clientY
-  speed=Math.max(20,Math.min(350,speed+dy*0.3))
-  touchStartY=e.touches[0].clientY
+stage.addEventListener('touchmove', e=>{
+  if(touchStartY===null || posDragging) return
+  const dy = touchStartY - e.touches[0].clientY
+  speed = Math.max(20, Math.min(350, speed + dy*0.3))
+  touchStartY = e.touches[0].clientY
   updateSpeedUI()
   clearTimeout(hintTimer)
-  hint.style.opacity='1'
-  hintTimer=setTimeout(()=>hint.style.opacity='0',1500)
+  hint.style.opacity = '1'
+  hintTimer = setTimeout(()=>{ hint.style.opacity='0'; saveSettings() }, 1500)
 },{passive:true})
-stage.addEventListener('touchend',()=>{touchStartY=null},{passive:true})
+stage.addEventListener('touchend', ()=>{ touchStartY=null },{passive:true})
 
-// ── DOBLE TAP → PLAY ──
 let lastTap=0
-stage.addEventListener('touchend',e=>{
-  if(posDragging)return
-  const now=Date.now()
-  if(now-lastTap<300)play()
-  lastTap=now
+stage.addEventListener('touchend', e=>{
+  if(posDragging) return
+  const now = Date.now()
+  if(now - lastTap < 300) play()
+  lastTap = now
 },{passive:true})
 
-// ── Pausa en background ──
-document.addEventListener('visibilitychange',()=>{
-  if(document.hidden)lastTime=null
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden) lastTime=null
 })
+
+applySettings()
 </script>
 </body>
 </html>
