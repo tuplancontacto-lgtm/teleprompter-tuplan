@@ -2,308 +2,139 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
 <title>Teleprompter Pro</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap');
 
-:root {
-  --bg: #080808;
-  --surface: #111113;
-  --surface2: #1a1a1e;
-  --border: rgba(255,255,255,0.07);
-  --accent: #00e5ff;
-  --red: #ff3333;
-  --text: #f0f0f0;
-  --muted: #666;
-  --panel-w: 280px;
+body{
+margin:0;
+background:black;
+color:white;
+font-family:Arial,Helvetica,sans-serif;
+overflow:hidden;
 }
 
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-
-html, body {
-  width:100%; height:100%;
-  background: var(--bg);
-  color: var(--text);
-  overflow: hidden;
-  font-family: 'DM Sans', Arial, sans-serif;
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
-  -webkit-font-smoothing: antialiased;
+video{
+position:fixed;
+width:100%;
+height:100%;
+object-fit:cover;
+z-index:-1;
 }
 
-#editor-wrap {
-  position: relative;
-  height: 22vh; min-height: 80px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  transition: height .3s ease;
-  overflow: hidden;
-}
-body.hide-editor #editor-wrap { height: 0; }
-
-#editor-label {
-  position: absolute; top:10px; left:14px;
-  font-size:10px; letter-spacing:2px;
-  text-transform:uppercase; color:var(--muted);
-  font-family:'DM Mono',monospace; pointer-events:none;
-}
-#editor {
-  width:100%; height:100%;
-  padding:32px 14px 14px;
-  background:transparent; color:var(--text);
-  border:none; outline:none; resize:none;
-  font-size:15px; line-height:1.6;
-  font-family:'DM Mono',monospace;
+#readingZone{
+position:absolute;
+width:90%;
+left:5%;
+top:8%;
+text-align:center;
+overflow:hidden;
+height:220px;
 }
 
-#stage {
-  position:relative; height:78vh;
-  transition:height .3s ease;
-  overflow:hidden; background:#111;
-}
-body.hide-editor #stage { height:100vh; }
-
-#camera {
-  position:absolute; inset:0;
-  width:100%; height:100%;
-  object-fit:cover;
-  transform:scaleX(-1);
+#teleprompter{
+position:absolute;
+width:100%;
+line-height:1.4em;
+font-size:38px;
+font-weight:600;
+text-shadow:0 0 10px black;
 }
 
-#stage::before {
-  content:''; position:absolute; inset:0;
-  background:linear-gradient(to bottom,
-    rgba(0,0,0,.5) 0%, rgba(0,0,0,.1) 25%,
-    rgba(0,0,0,.1) 75%, rgba(0,0,0,.5) 100%);
-  z-index:1; pointer-events:none;
+.controls{
+
+position:fixed;
+bottom:20px;
+width:100%;
+text-align:center;
 }
 
-#cam-msg {
-  position:absolute; inset:0;
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-  z-index:3; padding:20px; text-align:center; gap:12px;
-}
-#cam-msg h2 { font-size:20px; color:#fff; }
-#cam-msg p  { font-size:14px; color:#aaa; line-height:1.5; max-width:300px; }
-#cam-msg .retry-btn {
-  margin-top:8px; padding:12px 24px;
-  background:var(--accent); color:#000;
-  border:none; border-radius:10px;
-  font-size:15px; font-weight:600; cursor:pointer;
+button{
+
+font-size:20px;
+padding:10px 14px;
+margin:4px;
+border-radius:8px;
+border:none;
+background:#111;
+color:white;
+
 }
 
-#reading-zone {
-  position:absolute; width:100%; height:160px;
-  overflow:hidden; top:38%; z-index:5; pointer-events:none;
-  will-change:top;
-}
-#reading-zone::before, #reading-zone::after {
-  content:''; position:absolute;
-  left:5%; right:5%; height:2px;
-  background:linear-gradient(90deg,transparent,var(--accent),transparent);
-  opacity:.5; z-index:6;
-}
-#reading-zone::before { top:0; }
-#reading-zone::after  { bottom:0; }
-
-#teleprompter {
-  font-family:'DM Sans',Arial,sans-serif;
-  font-weight:600; font-size:42px; line-height:1.25;
-  max-width:88%; margin:auto; text-align:center;
-  white-space:pre-wrap; color:#fff;
-  text-shadow:0 2px 8px rgba(0,0,0,.95),0 0 20px rgba(0,0,0,.7);
-  will-change:transform;
-  transform:translateZ(0);
+.rec{
+background:red;
 }
 
-#status-bar {
-  position:absolute; top:14px; left:50%;
-  transform:translateX(-50%);
-  z-index:10; display:flex; align-items:center; gap:10px;
-}
-.status-pill {
-  background:rgba(0,0,0,.75);
-  border:1px solid var(--border);
-  border-radius:20px; padding:6px 14px;
-  font-size:12px; font-family:'DM Mono',monospace;
-  letter-spacing:1px; color:var(--muted);
-}
-#rec-pill { display:flex;align-items:center;gap:7px;opacity:0;transition:opacity .3s; }
-#rec-pill.active { opacity:1; }
-#rec-dot {
-  width:8px;height:8px;border-radius:50%;
-  background:var(--red);animation:blink 1s ease-in-out infinite;
-}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
-#timer-display { opacity:0;transition:opacity .3s;color:var(--text); }
-#timer-display.active { opacity:1; }
+#sliders{
 
-.corner-btn {
-  position:absolute; top:14px; z-index:10;
-  background:rgba(0,0,0,.75);
-  border:1px solid var(--border);
-  border-radius:10px; padding:8px 14px;
-  font-size:13px; cursor:pointer; color:var(--text);
-  font-family:'DM Sans',sans-serif; transition:background .2s;
-}
-.corner-btn:active { background:rgba(255,255,255,.15); }
-#settingsBtn { left:14px; }
-#textBtn     { right:14px; }
-#mirrorBtn   { position:absolute;top:14px;right:100px;z-index:10; }
+position:fixed;
+right:10px;
+top:100px;
+background:rgba(0,0,0,.7);
+padding:10px;
+border-radius:10px;
+display:block;
 
-.controls {
-  position:fixed; bottom:28px; left:50%;
-  transform:translateX(-50%);
-  display:flex; align-items:center; gap:12px;
-  z-index:20; background:rgba(0,0,0,.85);
-  border:1px solid var(--border);
-  border-radius:60px; padding:10px 20px;
 }
-.ctrl-btn {
-  width:52px;height:52px; border-radius:50%;
-  border:1px solid var(--border);
-  background:var(--surface2); color:var(--text);
-  font-size:18px; cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  transition:transform .15s;
-}
-.ctrl-btn:active { transform:scale(.92); }
-#playBtn { border-color:rgba(0,229,255,.4); }
-#playBtn.playing { background:rgba(0,229,255,.15);border-color:var(--accent); }
-#recBtn  { background:rgba(255,51,51,.15);border-color:rgba(255,51,51,.5);color:var(--red); }
-#stopRecBtn { color:var(--muted); }
-.ctrl-divider { width:1px;height:30px;background:var(--border); }
-#speed-display {
-  font-family:'DM Mono',monospace; font-size:11px;
-  color:var(--muted); text-align:center; min-width:36px; line-height:1.3;
-}
-#speed-display span { display:block;font-size:16px;color:var(--text); }
 
-#countdown {
-  position:absolute;inset:0;
-  display:flex;align-items:center;justify-content:center;
-  font-family:'Bebas Neue',Impact,cursive; font-size:180px; color:var(--text);
-  background:rgba(0,0,0,.75); z-index:50;
-  opacity:0;pointer-events:none;transition:opacity .3s;
+.sliderBlock{
+margin-bottom:15px;
 }
-#countdown.show{opacity:1;pointer-events:auto;}
-#countdown-num{transform:scale(.5);transition:transform .2s cubic-bezier(.34,1.56,.64,1);}
-#countdown.show #countdown-num{transform:scale(1);}
 
-#panel {
-  position:fixed; left:calc(-1 * var(--panel-w) - 10px);
-  top:0;bottom:0; width:var(--panel-w);
-  background:#0d0d0f; border-right:1px solid var(--border);
-  z-index:40; transition:left .3s ease;
-  display:flex;flex-direction:column; overflow-y:auto;
-}
-#panel.open{left:0;}
-#panel-header {
-  padding:20px 20px 16px; border-bottom:1px solid var(--border);
-  font-size:11px;letter-spacing:2px;text-transform:uppercase;
-  color:var(--muted);font-family:'DM Mono',monospace;
-}
-.panel-section{padding:20px;border-bottom:1px solid var(--border);}
-.panel-label{
-  font-size:11px;letter-spacing:1.5px;text-transform:uppercase;
-  color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:12px;
-}
-.panel-value{float:right;color:var(--accent);}
 input[type=range]{
-  -webkit-appearance:none; width:100%;height:4px;border-radius:2px;
-  background:var(--surface2); outline:none;cursor:pointer;
-  margin-top:4px;clear:both;display:block;
-}
-input[type=range]::-webkit-slider-thumb{
-  -webkit-appearance:none; width:20px;height:20px;
-  border-radius:50%;background:var(--accent);cursor:pointer;
-}
-input[type=range]::-moz-range-thumb{
-  width:20px;height:20px;border-radius:50%;
-  background:var(--accent);border:none;cursor:pointer;
-}
-.color-row{display:flex;gap:10px;margin-top:10px;}
-.color-swatch{
-  width:32px;height:32px;border-radius:8px;cursor:pointer;
-  border:2px solid transparent;transition:border-color .2s;
-}
-.color-swatch.active{border-color:white;}
-.panel-toggle-row{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
-.toggle{position:relative;width:40px;height:22px;}
-.toggle input{opacity:0;width:0;height:0;}
-.toggle-slider{
-  position:absolute;inset:0; background:var(--surface2);
-  border-radius:11px;cursor:pointer;transition:.3s;border:1px solid var(--border);
-}
-.toggle-slider::before{
-  content:'';position:absolute; width:16px;height:16px;left:2px;top:2px;
-  background:var(--muted);border-radius:50%;transition:.3s;
-}
-.toggle input:checked + .toggle-slider{background:rgba(0,229,255,.2);border-color:var(--accent);}
-.toggle input:checked + .toggle-slider::before{transform:translateX(18px);background:var(--accent);}
-
-#overlay{
-  position:fixed;inset:0;background:rgba(0,0,0,.5);
-  z-index:35;opacity:0;pointer-events:none;transition:opacity .3s;
-}
-#overlay.show{opacity:1;pointer-events:auto;}
-
-#pos-slider-wrap{
-  position:absolute;right:14px;top:50%;
-  transform:translateY(-50%);
-  z-index:10;display:flex;flex-direction:column;align-items:center;gap:6px;
-}
-#pos-slider-label{
-  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;
-  color:var(--accent);text-transform:uppercase;writing-mode:vertical-rl;
-  transform:rotate(180deg);opacity:.7;
-}
-#pos-slider-val{
-  font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);
-  background:rgba(0,0,0,.75);border:1px solid rgba(0,229,255,.3);
-  border-radius:8px;padding:3px 6px;min-width:36px;text-align:center;
-}
-#pos-slider-track{
-  position:relative;width:6px;height:160px;
-  background:rgba(255,255,255,.08);border-radius:3px;
-  border:1px solid var(--border);cursor:pointer;
-}
-#pos-slider-fill{
-  position:absolute;bottom:0;left:0;right:0;border-radius:3px;
-  background:linear-gradient(to top,var(--accent),rgba(0,229,255,.3));
-  pointer-events:none;
-}
-#pos-slider-thumb{
-  position:absolute;left:50%;transform:translate(-50%,50%);
-  width:20px;height:20px;border-radius:50%;background:var(--accent);
-  box-shadow:0 0 8px rgba(0,229,255,.5);border:2px solid rgba(255,255,255,.3);
-  cursor:grab;bottom:0%;
-}
-#pos-slider-thumb:active{cursor:grabbing;}
-
-#speed-touch-hint{
-  position:absolute;bottom:100px;left:50%;transform:translateX(-50%);
-  font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;
-  opacity:0;transition:opacity .5s;z-index:10;letter-spacing:1px;pointer-events:none;
+width:120px;
 }
 
-@media(max-width:600px){
-  #teleprompter{font-size:32px;max-width:95%;}
-  .ctrl-btn{width:46px;height:46px;font-size:16px;}
-  #speed-display{display:none;}
-  .ctrl-divider{display:none;}
-  .controls{gap:8px;padding:8px 14px;}
+#editorBox{
+
+position:fixed;
+top:0;
+width:100%;
+height:180px;
+background:black;
+display:none;
+
 }
+
+textarea{
+
+width:95%;
+height:140px;
+margin:10px;
+font-size:20px;
+
+}
+
+#countdown{
+
+position:fixed;
+top:40%;
+width:100%;
+text-align:center;
+font-size:90px;
+display:none;
+
+}
+
 </style>
+
 </head>
+
 <body>
 
-<div id="editor-wrap">
-  <span id="editor-label">SCRIPT</span>
-  <textarea id="editor">"La Isapre es más cara…"
+<video id="video" autoplay muted playsinline></video>
 
+<div id="readingZone">
+<div id="teleprompter"></div>
+</div>
+
+<div id="editorBox">
+
+<textarea id="editor">
+
+“La Isapre es más cara”…
 Depende.
 
 Si ganas 1.800.000,
@@ -311,413 +142,394 @@ tu 7% son 126.000.
 
 Con eso puedes tener acceso
 a clínicas privadas,
+
 reembolsos en menos de 48 horas,
+
 y beneficios adicionales.
 
 No es más caro.
-Es distinto.</textarea>
+Es distinto.
+
+Soy José Mora
+Asesor Isapre Colmena
+
+</textarea>
+
 </div>
 
-<div id="stage">
-  <div id="settingsBtn" class="corner-btn">⚙ Config</div>
-  <div id="mirrorBtn"   class="corner-btn">⇄</div>
-  <div id="textBtn"     class="corner-btn">✎ Script</div>
 
-  <div id="status-bar">
-    <div id="rec-pill" class="status-pill"><div id="rec-dot"></div><span>REC</span></div>
-    <div id="timer-display" class="status-pill">00:00</div>
-  </div>
+<div id="sliders">
 
-  <video id="camera" autoplay playsinline muted></video>
+<div class="sliderBlock">
 
-  <div id="cam-msg" style="display:none">
-    <h2>📷 Cámara no disponible</h2>
-    <p id="cam-err-text">Permite el acceso a cámara y micrófono en tu navegador.</p>
-    <button class="retry-btn" id="retryBtn">Reintentar</button>
-  </div>
+Velocidad
+<br>
 
-  <div id="reading-zone"><div id="teleprompter"></div></div>
-  <div id="countdown"><div id="countdown-num">5</div></div>
-  <div id="speed-touch-hint">↕ DESLIZA PARA VELOCIDAD</div>
+<input id="speedSlider" type="range"
+min="1" max="10" value="3">
 
-  <div id="pos-slider-wrap">
-    <div id="pos-slider-val">38%</div>
-    <div id="pos-slider-track">
-      <div id="pos-slider-fill" style="height:38%"></div>
-      <div id="pos-slider-thumb" style="bottom:38%"></div>
-    </div>
-    <div id="pos-slider-label">Posición</div>
-  </div>
 </div>
+
+
+<div class="sliderBlock">
+
+Tamaño texto
+<br>
+
+<input id="fontSlider" type="range"
+min="24" max="80" value="38">
+
+</div>
+
+
+<div class="sliderBlock">
+
+Altura texto
+<br>
+
+<input id="heightSlider"
+type="range"
+min="0"
+max="90"
+value="8">
+
+</div>
+
+</div>
+
 
 <div class="controls">
-  <button class="ctrl-btn" id="playBtn">▶</button>
-  <button class="ctrl-btn" id="stopBtn">⏹</button>
-  <div class="ctrl-divider"></div>
-  <button class="ctrl-btn" id="recBtn">●</button>
-  <button class="ctrl-btn" id="stopRecBtn">■</button>
-  <div class="ctrl-divider"></div>
-  <div id="speed-display">VEL<span id="speed-val">120</span></div>
+
+<button onclick="toggleEditor()">Texto</button>
+
+<button onclick="play()">Play</button>
+
+<button onclick="pause()">Pause</button>
+
+<button onclick="stop()">Stop</button>
+
+<button class="rec" onclick="startRecording()">REC</button>
+
 </div>
 
-<div id="overlay"></div>
 
-<div id="panel">
-  <div id="panel-header">⚙ Configuración</div>
-  <div class="panel-section">
-    <div class="panel-label">Velocidad <span class="panel-value" id="speed-lbl">120 px/s</span></div>
-    <input type="range" min="20" max="350" value="120" id="speedControl">
-  </div>
-  <div class="panel-section">
-    <div class="panel-label">Tamaño texto <span class="panel-value" id="font-lbl">42px</span></div>
-    <input type="range" min="22" max="72" value="42" id="fontControl">
-  </div>
-  <div class="panel-section">
-    <div class="panel-label">Posición lectura <span class="panel-value" id="pos-lbl">38%</span></div>
-    <input type="range" min="0" max="100" value="38" id="positionControl">
-  </div>
-  <div class="panel-section">
-    <div class="panel-label">Color texto</div>
-    <div class="color-row">
-      <div class="color-swatch active" style="background:#ffffff" data-color="#ffffff"></div>
-      <div class="color-swatch" style="background:#00e5ff" data-color="#00e5ff"></div>
-      <div class="color-swatch" style="background:#ffd54f" data-color="#ffd54f"></div>
-      <div class="color-swatch" style="background:#a5d6a7" data-color="#a5d6a7"></div>
-      <div class="color-swatch" style="background:#ef9a9a" data-color="#ef9a9a"></div>
-    </div>
-  </div>
-  <div class="panel-section">
-    <div class="panel-label">Cuenta regresiva <span class="panel-value" id="cd-lbl">5s</span></div>
-    <input type="range" min="0" max="10" value="5" id="countdownControl">
-  </div>
-  <div class="panel-section">
-    <div class="panel-label">Espejo cámara</div>
-    <div class="panel-toggle-row">
-      <span style="font-size:13px;color:var(--muted)">Voltear imagen</span>
-      <label class="toggle">
-        <input type="checkbox" id="mirrorToggle" checked>
-        <span class="toggle-slider"></span>
-      </label>
-    </div>
-  </div>
-  <div class="panel-section">
-    <div class="panel-label">Auto-play al grabar</div>
-    <div class="panel-toggle-row">
-      <span style="font-size:13px;color:var(--muted)">Iniciar scroll al grabar</span>
-      <label class="toggle">
-        <input type="checkbox" id="autoPlayToggle" checked>
-        <span class="toggle-slider"></span>
-      </label>
-    </div>
-  </div>
-</div>
+<div id="countdown"></div>
 
 <script>
-'use strict'
 
-let speed=120, y=0, isPlaying=false, isPaused=false
-let lastTime=null, raf=null
-let mediaRecorder=null, recordedChunks=[]
-let countdownSecs=5, timerInterval=null, recSeconds=0
-let isMirrored=true, touchStartY=null, posDragging=false
 
-const tele        = document.getElementById('teleprompter')
-const readingZone = document.getElementById('reading-zone')
-const camEl       = document.getElementById('camera')
-const camMsg      = document.getElementById('cam-msg')
-const camErrText  = document.getElementById('cam-err-text')
-const countdownEl = document.getElementById('countdown')
-const countdownNum= document.getElementById('countdown-num')
-const panel       = document.getElementById('panel')
-const overlay     = document.getElementById('overlay')
-const recPill     = document.getElementById('rec-pill')
-const timerDisp   = document.getElementById('timer-display')
-const playBtn     = document.getElementById('playBtn')
-const speedVal    = document.getElementById('speed-val')
-const posTrack    = document.getElementById('pos-slider-track')
-const posThumb    = document.getElementById('pos-slider-thumb')
-const posFill     = document.getElementById('pos-slider-fill')
-const posValLbl   = document.getElementById('pos-slider-val')
-const stage       = document.getElementById('stage')
-const hint        = document.getElementById('speed-touch-hint')
+let video=document.getElementById("video")
 
-// ── CÁMARA con fallback progresivo ──
-async function initCamera() {
-  const constraints = [
-    { video:{ facingMode:'user', width:{ideal:640}, height:{ideal:480} }, audio:true },
-    { video:{ facingMode:'user' }, audio:true },
-    { video:true, audio:true },
-    { video:true, audio:false }
-  ]
-  for (let i=0; i<constraints.length; i++) {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia(constraints[i])
-      camEl.srcObject = stream
-      window.appStream = stream
-      camMsg.style.display = 'none'
-      camEl.style.display  = 'block'
-      return
-    } catch(e) {
-      console.warn('Intento',i,'falló:',e.name,e.message)
-      if (i===constraints.length-1) showCamError(e)
-    }
-  }
-}
+navigator.mediaDevices.getUserMedia({
 
-function showCamError(e) {
-  camEl.style.display  = 'none'
-  camMsg.style.display = 'flex'
-  const msgs = {
-    NotAllowedError:     '🔒 Permiso denegado. Ve a Configuración del navegador → Permisos → Cámara y Micrófono → Permitir para este sitio.',
-    NotFoundError:       '🔍 No se encontró cámara. Verifica que tu dispositivo tenga cámara disponible.',
-    NotReadableError:    '⚠️ La cámara está siendo usada por otra app. Cierra otras apps que usen la cámara.',
-    OverconstrainedError:'⚙️ Tu cámara no soporta la configuración solicitada.',
-    SecurityError:       '🔐 Necesita HTTPS. Abre el archivo desde un servidor web (ej: Vercel, GitHub Pages).',
-    TypeError:           '🌐 Tu navegador no soporta cámara. Usa Chrome o Firefox actualizados.'
-  }
-  camErrText.textContent = msgs[e.name] || ('Error: ' + e.name + ' — ' + e.message)
-}
+video:{
+width:{ideal:1280},
+height:{ideal:720},
+facingMode:"user"
 
-document.getElementById('retryBtn').addEventListener('click', initCamera)
-initCamera()
+},
 
-// ── ESPEJO ──
-function setMirror(val) {
-  isMirrored = val
-  camEl.style.transform = val ? 'scaleX(-1)' : 'scaleX(1)'
-}
-document.getElementById('mirrorToggle').addEventListener('change', e => setMirror(e.target.checked))
-document.getElementById('mirrorBtn').addEventListener('click', () => {
-  isMirrored = !isMirrored; setMirror(isMirrored)
-  document.getElementById('mirrorToggle').checked = isMirrored
+audio:true
+
+}).then(stream=>{
+
+video.srcObject=stream
+window.stream=stream
+
 })
 
-// ── PLAY / PAUSA ──
-function play() {
-  if (isPlaying && !isPaused) {
-    isPaused=true; isPlaying=false
-    playBtn.textContent='▶'; playBtn.classList.remove('playing'); return
-  }
-  if (isPaused) {
-    isPaused=false; isPlaying=true
-    playBtn.textContent='⏸'; playBtn.classList.add('playing')
-    lastTime=null; raf=requestAnimationFrame(loop); return
-  }
-  const raw = document.getElementById('editor').value
-  if (!raw.trim()) return
-  tele.textContent = raw
-  y = readingZone.offsetHeight + 80
-  tele.style.transform = `translateZ(0) translateY(${y}px)`
-  isPlaying=true; isPaused=false
-  playBtn.textContent='⏸'; playBtn.classList.add('playing')
-  lastTime=null; raf=requestAnimationFrame(loop)
+
+let tele=document.getElementById("teleprompter")
+
+let editor=document.getElementById("editor")
+
+let readingZone=document.getElementById("readingZone")
+
+
+let speed=2
+
+let pos=0
+
+let playing=false
+
+let recorder
+
+let chunks=[]
+
+
+function formatText(){
+
+let txt=editor.value
+
+txt=txt.replace(/\n\n/g,"\n")
+
+tele.innerHTML=txt.replace(/\n/g,"<br>")
+
 }
 
-function stop() {
-  isPlaying=false; isPaused=false
-  if(raf){cancelAnimationFrame(raf);raf=null}
-  y=0
-  tele.textContent = document.getElementById('editor').value
-  tele.style.transform = 'translateZ(0) translateY(0)'
-  playBtn.textContent='▶'; playBtn.classList.remove('playing')
+
+formatText()
+
+
+editor.oninput=formatText
+
+
+function play(){
+
+playing=true
+
 }
 
-function loop(ts) {
-  if(!isPlaying) return
-  if(!lastTime) lastTime=ts
-  const delta = Math.min(ts-lastTime, 100) / 1000
-  lastTime=ts
-  y -= speed * delta
-  tele.style.transform = `translateZ(0) translateY(${y}px)`
-  raf=requestAnimationFrame(loop)
+
+function pause(){
+
+playing=false
+
 }
 
-playBtn.addEventListener('click', play)
-document.getElementById('stopBtn').addEventListener('click', stop)
 
-document.addEventListener('keydown', e => {
-  if(document.activeElement===document.getElementById('editor')) return
-  if(e.code==='Space')    {e.preventDefault();play()}
-  if(e.code==='Escape')   stop()
-  if(e.code==='ArrowUp')  {speed=Math.min(350,speed+10);updateSpeedUI()}
-  if(e.code==='ArrowDown'){speed=Math.max(20, speed-10);updateSpeedUI()}
+function stop(){
+
+playing=false
+pos=0
+
+tele.style.top="0px"
+
+}
+
+
+function loop(){
+
+if(playing){
+
+pos-=speed
+
+tele.style.top=pos+"px"
+
+}
+
+requestAnimationFrame(loop)
+
+}
+
+loop()
+
+
+
+speedSlider.oninput=e=>{
+
+speed=parseInt(e.target.value)
+
+saveSettings()
+
+}
+
+
+fontSlider.oninput=e=>{
+
+tele.style.fontSize=e.target.value+"px"
+
+saveSettings()
+
+}
+
+
+heightSlider.oninput=e=>{
+
+readingZone.style.top=e.target.value+"%"
+
+saveSettings()
+
+}
+
+
+function toggleEditor(){
+
+let box=document.getElementById("editorBox")
+
+if(box.style.display=="none")
+box.style.display="block"
+else
+box.style.display="none"
+
+}
+
+
+
+function startRecording(){
+
+document.getElementById("sliders").style.display="none"
+
+document.querySelector(".controls").innerHTML=
+
+'<button onclick="stopRecording()">STOP</button>'
+
+
+countdown()
+
+}
+
+
+
+function countdown(){
+
+let c=document.getElementById("countdown")
+
+c.style.display="block"
+
+let n=5
+
+c.innerHTML=n
+
+let i=setInterval(()=>{
+
+n--
+
+c.innerHTML=n
+
+if(n==0){
+
+clearInterval(i)
+
+c.style.display="none"
+
+record()
+
+play()
+
+}
+
+},1000)
+
+}
+
+
+
+function record(){
+
+chunks=[]
+
+let mime=""
+
+if(MediaRecorder.isTypeSupported("video/mp4"))
+mime="video/mp4"
+else
+mime="video/webm"
+
+
+recorder=new MediaRecorder(stream,{
+
+mimeType:mime,
+videoBitsPerSecond:5000000
+
 })
 
-// ── GRABACIÓN ──
-document.getElementById('recBtn').addEventListener('click', startCountdown)
-document.getElementById('stopRecBtn').addEventListener('click', stopRecording)
 
-function startCountdown() {
-  document.body.classList.add('hide-editor')
-  const el=document.documentElement
-  try {
-    if     (el.requestFullscreen)       el.requestFullscreen()
-    else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen()
-    else if(el.mozRequestFullScreen)    el.mozRequestFullScreen()
-  } catch(e){}
+recorder.ondataavailable=e=>{
 
-  let val=countdownSecs
-  if(val===0){startRecording();return}
-  countdownNum.textContent=val
-  countdownEl.classList.add('show')
-  const iv=setInterval(()=>{
-    val--
-    countdownNum.textContent=val||'¡GO!'
-    countdownNum.style.transform='scale(.5)'
-    requestAnimationFrame(()=>requestAnimationFrame(()=>
-      countdownNum.style.transform='scale(1)'
-    ))
-    if(val<=0){
-      clearInterval(iv)
-      setTimeout(()=>{countdownEl.classList.remove('show');startRecording()},600)
-    }
-  },1000)
+chunks.push(e.data)
+
 }
 
-function startRecording() {
-  if(!window.appStream){
-    alert('No hay cámara. Permite el acceso primero.')
-    document.body.classList.remove('hide-editor')
-    return
-  }
-  recordedChunks=[]
-  const types=['video/webm;codecs=vp8,opus','video/webm','video/mp4','']
-  const mimeType=types.find(t=>!t||MediaRecorder.isTypeSupported(t))||''
-  const opts=mimeType?{mimeType,videoBitsPerSecond:1500000}:{}
 
-  try { mediaRecorder=new MediaRecorder(window.appStream,opts) }
-  catch(e) {
-    try { mediaRecorder=new MediaRecorder(window.appStream) }
-    catch(e2){ alert('No se puede grabar: '+e2.message); return }
-  }
+recorder.onstop=saveVideo
 
-  mediaRecorder.ondataavailable=e=>{if(e.data.size>0)recordedChunks.push(e.data)}
-  mediaRecorder.onstop=saveVideo
-  mediaRecorder.start(500)
+recorder.start()
 
-  recPill.classList.add('active')
-  recSeconds=0; timerDisp.textContent='00:00'; timerDisp.classList.add('active')
-  timerInterval=setInterval(()=>{
-    recSeconds++
-    timerDisp.textContent=
-      String(Math.floor(recSeconds/60)).padStart(2,'0')+':'+
-      String(recSeconds%60).padStart(2,'0')
-  },1000)
-
-  if(document.getElementById('autoPlayToggle').checked && !isPlaying) play()
 }
 
-function stopRecording() {
-  if(mediaRecorder&&mediaRecorder.state!=='inactive') mediaRecorder.stop()
-  clearInterval(timerInterval)
-  recPill.classList.remove('active'); timerDisp.classList.remove('active')
-  document.body.classList.remove('hide-editor')
-  try {
-    if     (document.exitFullscreen)       document.exitFullscreen()
-    else if(document.webkitExitFullscreen) document.webkitExitFullscreen()
-    else if(document.mozCancelFullScreen)  document.mozCancelFullScreen()
-  } catch(e){}
+
+
+function stopRecording(){
+
+recorder.stop()
+
+playing=false
+
+document.getElementById("sliders").style.display="block"
+
+location.reload()
+
 }
 
-function saveVideo() {
-  const mime=recordedChunks[0]?.type||'video/webm'
-  const ext=mime.includes('mp4')?'mp4':'webm'
-  const blob=new Blob(recordedChunks,{type:mime})
-  const url=URL.createObjectURL(blob)
-  const a=document.createElement('a')
-  a.href=url
-  a.download=`teleprompter_${new Date().toISOString().slice(0,19).replace(/[:.]/g,'-')}.${ext}`
-  a.click()
-  setTimeout(()=>URL.revokeObjectURL(url),8000)
-}
 
-// ── PANEL ──
-function togglePanel(){panel.classList.toggle('open');overlay.classList.toggle('show')}
-document.getElementById('settingsBtn').addEventListener('click',togglePanel)
-overlay.addEventListener('click',togglePanel)
-document.getElementById('textBtn').addEventListener('click',()=>
-  document.body.classList.toggle('hide-editor')
-)
 
-function updateSpeedUI(){
-  speedVal.textContent=speed
-  document.getElementById('speed-lbl').textContent=speed+' px/s'
-  document.getElementById('speedControl').value=speed
-}
-document.getElementById('speedControl').addEventListener('input',e=>{speed=parseFloat(e.target.value);updateSpeedUI()})
-document.getElementById('fontControl').addEventListener('input',e=>{
-  tele.style.fontSize=e.target.value+'px'
-  document.getElementById('font-lbl').textContent=e.target.value+'px'
-})
-document.getElementById('positionControl').addEventListener('input',e=>setPosFromPercent(parseFloat(e.target.value)))
-document.getElementById('countdownControl').addEventListener('input',e=>{
-  countdownSecs=parseInt(e.target.value)
-  document.getElementById('cd-lbl').textContent=countdownSecs+'s'
-})
+function saveVideo(){
 
-document.querySelectorAll('.color-swatch').forEach(sw=>{
-  sw.addEventListener('click',()=>{
-    document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active'))
-    sw.classList.add('active'); tele.style.color=sw.dataset.color
-    tele.style.textShadow=sw.dataset.color!=='#ffffff'
-      ?`0 2px 8px rgba(0,0,0,.95),0 0 12px ${sw.dataset.color}66`
-      :'0 2px 8px rgba(0,0,0,.95),0 0 20px rgba(0,0,0,.7)'
-  })
-})
 
-// ── SLIDER POSICIÓN ──
-function setPosFromPercent(pct){
-  pct=Math.max(0,Math.min(100,pct))
-  readingZone.style.top=pct+'%'
-  posThumb.style.bottom=pct+'%'
-  posFill.style.height=pct+'%'
-  posValLbl.textContent=Math.round(pct)+'%'
-  document.getElementById('positionControl').value=pct
-  document.getElementById('pos-lbl').textContent=Math.round(pct)+'%'
-}
-function getPctFromEvent(clientY){
-  const rect=posTrack.getBoundingClientRect()
-  return((rect.bottom-clientY)/rect.height)*100
-}
-posTrack.addEventListener('mousedown',e=>{posDragging=true;setPosFromPercent(getPctFromEvent(e.clientY));e.preventDefault()})
-posThumb.addEventListener('mousedown',e=>{posDragging=true;e.preventDefault();e.stopPropagation()})
-document.addEventListener('mousemove',e=>{if(posDragging)setPosFromPercent(getPctFromEvent(e.clientY))})
-document.addEventListener('mouseup',()=>{posDragging=false})
-posTrack.addEventListener('touchstart',e=>{posDragging=true;setPosFromPercent(getPctFromEvent(e.touches[0].clientY));e.stopPropagation()},{passive:true})
-posThumb.addEventListener('touchstart',e=>{posDragging=true;e.stopPropagation()},{passive:true})
-document.addEventListener('touchmove',e=>{if(posDragging)setPosFromPercent(getPctFromEvent(e.touches[0].clientY))},{passive:true})
-document.addEventListener('touchend',()=>{posDragging=false},{passive:true})
+let mime=chunks[0].type
 
-// ── DESLIZ → VELOCIDAD ──
-let hintTimer
-stage.addEventListener('touchstart',e=>{
-  if(e.touches.length===1)touchStartY=e.touches[0].clientY
-},{passive:true})
-stage.addEventListener('touchmove',e=>{
-  if(touchStartY===null||posDragging)return
-  const dy=touchStartY-e.touches[0].clientY
-  speed=Math.max(20,Math.min(350,speed+dy*0.3))
-  touchStartY=e.touches[0].clientY
-  updateSpeedUI()
-  clearTimeout(hintTimer)
-  hint.style.opacity='1'
-  hintTimer=setTimeout(()=>hint.style.opacity='0',1500)
-},{passive:true})
-stage.addEventListener('touchend',()=>{touchStartY=null},{passive:true})
+let ext=mime.includes("mp4")?"mp4":"webm"
 
-// ── DOBLE TAP → PLAY ──
-let lastTap=0
-stage.addEventListener('touchend',e=>{
-  if(posDragging)return
-  const now=Date.now()
-  if(now-lastTap<300)play()
-  lastTap=now
-},{passive:true})
+let blob=new Blob(chunks,{type:mime})
 
-// ── Pausa en background ──
-document.addEventListener('visibilitychange',()=>{
-  if(document.hidden)lastTime=null
-})
-</script>
+let url=URL.createObjectURL(blob)
+
+
+let w=window.open("")
+
+w.document.write(`
+
+<body style="background:black">
+
+<video controls autoplay style="width:100%">
+
+<source src="${url}" type="${mime}">
+
+</video>
+
+<br><br>
+
+<a href="${url}" download="video.${ext}"
+style="color:white;font-size:30px">
+
+DESCARGAR VIDEO
+
+</a>
+
 </body>
+
+`)
+
+}
+
+
+
+function saveSettings(){
+
+localStorage.speed=speed
+localStorage.font=tele.style.fontSize
+localStorage.height=readingZone.style.top
+localStorage.text=editor.value
+
+}
+
+
+
+function loadSettings(){
+
+if(localStorage.speed)
+speed=localStorage.speed
+
+if(localStorage.font)
+tele.style.fontSize=localStorage.font
+
+if(localStorage.height)
+readingZone.style.top=localStorage.height
+
+if(localStorage.text)
+editor.value=localStorage.text
+
+formatText()
+
+}
+
+loadSettings()
+
+
+
+</script>
+
+</body>
+
 </html>
