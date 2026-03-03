@@ -5,38 +5,35 @@
 <meta charset="UTF-8">
 <title>Teleprompter Pro</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <script>
+ <script>
   (async () => {
     const slug = window.location.pathname.replace(/^\//, "");
-alert("Slug detectado: " + slug);
 
-    if (!slug) {
-      document.addEventListener("DOMContentLoaded", () => showBlocked("Ingresa con tu enlace personalizado."));
-      return;
-    }
+    if (!slug) return;
 
     try {
       const res  = await fetch(`https://teleprompter-backend-production.up.railway.app/api/teleprompter/${slug}`);
       const data = await res.json();
       if (!data.acceso) {
-        document.addEventListener("DOMContentLoaded", () => showBlocked(data.mensaje || "Acceso no válido."));
+        showBlocked(data.mensaje || "Acceso no válido.");
       }
     } catch (e) {
-      document.addEventListener("DOMContentLoaded", () => showBlocked("No se pudo verificar el acceso."));
+      showBlocked("No se pudo verificar el acceso.");
     }
 
     function showBlocked(msg) {
-      document.body.innerHTML = `
-        <div style="
+      document.documentElement.innerHTML = `
+        <html><body style="
           display:flex; flex-direction:column; align-items:center; justify-content:center;
           height:100vh; background:#080808; color:#f0f0f0;
-          font-family:'DM Sans',Arial,sans-serif; text-align:center; padding:30px; gap:16px;
+          font-family:Arial,sans-serif; text-align:center; padding:30px; gap:16px;
+          margin:0;
         ">
           <div style="font-size:48px">🔒</div>
           <h2 style="font-size:22px; margin:0">Acceso Restringido</h2>
           <p style="color:#666; font-size:15px; max-width:300px; line-height:1.6; margin:0">${msg}</p>
           <p style="color:#444; font-size:13px; margin:0">Contacta a tu administrador para obtener acceso.</p>
-        </div>`;
+        </body></html>`;
     }
   })();
 </script>
@@ -908,6 +905,7 @@ applySettings()
 </script>
 </body>
 </html>
+
 
 
 
