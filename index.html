@@ -8,6 +8,7 @@
   <script>
   (async () => {
     const slug = window.location.pathname.replace(/^\//, "");
+alert("Slug detectado: " + slug);
 
     if (!slug) {
       document.addEventListener("DOMContentLoaded", () => showBlocked("Ingresa con tu enlace personalizado."));
@@ -907,5 +908,6 @@ applySettings()
 </script>
 </body>
 </html>
+
 
 
