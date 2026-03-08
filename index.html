@@ -634,7 +634,7 @@ const voicePill    = document.getElementById('voice-pill')
 const pauseOverlay = document.getElementById('pause-overlay')
 const voiceBtn     = document.getElementById('voiceBtn')
 
-// ── KARAOKE ──
+// ════ KARAOKE ════
 let wordSpans     = []
 let activeWordIdx = -1
 
@@ -690,9 +690,9 @@ function clearKaraokeHighlights() {
 function jumpToWord(idx) {
   if (!isPlaying && !isPaused) return
   if (idx < 0 || idx >= wordSpans.length) return
-  const rz     = readingZone.getBoundingClientRect()
-  const rzCY   = rz.top + rz.height / 2
-  const spanR  = wordSpans[idx].getBoundingClientRect()
+  const rz   = readingZone.getBoundingClientRect()
+  const rzCY = rz.top + rz.height / 2
+  const spanR = wordSpans[idx].getBoundingClientRect()
   y += (rzCY - (spanR.top + spanR.height / 2))
   tele.style.transform = `translateZ(0) translateY(${y}px)`
   updateActiveWord()
@@ -701,101 +701,103 @@ function jumpToWord(idx) {
 function applyColorToWords(color) {
   if (!karaokeEnabled) return
   wordSpans.forEach(s => {
-    if (!s.classList.contains('active') && !s.classList.contains('done')) {
+    if (!s.classList.contains('active') && !s.classList.contains('done'))
       s.style.color = color !== '#ffffff' ? color : ''
-    }
   })
 }
 
-// ── VOICE DETECTION (Web Audio API) ──
+// ════ VOICE DETECTION — Web Audio API (robusta) ════
 let audioCtx         = null
 let analyser         = null
 let micSource        = null
 let voiceActive      = false
-let isSpeaking       = false
-let silenceTimer     = null
-let voiceRafId       = null
+let voiceInterval    = null
+let lastSoundTime    = 0
 let isAutoPaused     = false
 let autoPauseEnabled = S.autoPause
 
 function getSilenceMs() {
   const v = parseInt(document.getElementById('sensitivityControl').value)
-  return Math.round(2000 - (v - 1) * 375)
+  return Math.round(2500 - (v - 1) * 475)
 }
+
 function getVolumeThreshold() {
   const v = parseInt(document.getElementById('sensitivityControl').value)
-  return 18 - (v - 1) * 3
+  return 12 - (v - 1) * 2
 }
 
 async function startVoiceDetection() {
-  if (audioCtx) return
+  if (voiceActive) return
   try {
-    const stream = window.appStream || await navigator.mediaDevices.getUserMedia({ audio: true })
-    audioCtx  = new (window.AudioContext || window.webkitAudioContext)()
-    analyser  = audioCtx.createAnalyser()
-    analyser.fftSize = 256
-    analyser.smoothingTimeConstant = 0.4
-    micSource = audioCtx.createMediaStreamSource(stream)
+    const micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+    analyser = audioCtx.createAnalyser()
+    analyser.fftSize = 512
+    analyser.smoothingTimeConstant = 0.3
+    micSource = audioCtx.createMediaStreamSource(micStream)
     micSource.connect(analyser)
-    voiceActive = true
+    voiceActive   = true
+    lastSoundTime = Date.now()
     voicePill.classList.add('active')
     voiceBtn.classList.add('enabled')
-    monitorVolume()
+    startVoiceLoop()
   } catch(e) {
-    console.warn('Voice detection unavailable:', e)
+    console.warn('Micrófono no disponible:', e)
+    alert('No se pudo acceder al micrófono.\n' + e.message)
     voiceActive = false
   }
 }
 
 function stopVoiceDetection() {
   voiceActive = false
-  if (voiceRafId) { cancelAnimationFrame(voiceRafId); voiceRafId = null }
-  clearTimeout(silenceTimer)
+  if (voiceInterval) { clearInterval(voiceInterval); voiceInterval = null }
+  if (micSource)  { try { micSource.disconnect() } catch(e){} }
+  if (audioCtx)   { audioCtx.close().catch(()=>{}); audioCtx = null }
+  micSource = null; analyser = null
   voicePill.classList.remove('active', 'speaking')
+  voicePill.querySelector('#voice-pill-txt').textContent = 'VOZ'
   voiceBtn.classList.remove('enabled')
   if (isAutoPaused) resumeFromAutoPause()
 }
 
-function monitorVolume() {
-  if (!voiceActive) return
+function getRMS() {
+  if (!analyser) return 0
   const data = new Uint8Array(analyser.frequencyBinCount)
-  function tick() {
+  analyser.getByteFrequencyData(data)
+  const hz_per_bin = (audioCtx.sampleRate / 2) / analyser.frequencyBinCount
+  const binStart = Math.max(0, Math.floor(80   / hz_per_bin))
+  const binEnd   = Math.min(data.length - 1, Math.ceil(3000 / hz_per_bin))
+  let sum = 0, count = 0
+  for (let i = binStart; i <= binEnd; i++) { sum += data[i]; count++ }
+  return count > 0 ? sum / count : 0
+}
+
+function startVoiceLoop() {
+  if (voiceInterval) clearInterval(voiceInterval)
+  voiceInterval = setInterval(() => {
     if (!voiceActive) return
-    voiceRafId = requestAnimationFrame(tick)
-    analyser.getByteFrequencyData(data)
-    const binStart = Math.floor(200  / (audioCtx.sampleRate / analyser.fftSize))
-    const binEnd   = Math.floor(3000 / (audioCtx.sampleRate / analyser.fftSize))
-    let sum = 0
-    const count = Math.max(1, binEnd - binStart)
-    for (let i = binStart; i < binEnd && i < data.length; i++) sum += data[i] * data[i]
-    const rms = Math.sqrt(sum / count)
+    const rms      = getRMS()
     const threshold = getVolumeThreshold()
-    if (rms > threshold) {
-      if (!isSpeaking) {
-        isSpeaking = true
-        voicePill.classList.add('speaking')
-        voicePill.querySelector('#voice-pill-txt').textContent = 'HABLANDO'
-      }
-      clearTimeout(silenceTimer)
-      if (isAutoPaused && !isPlaying && autoPauseEnabled) resumeFromAutoPause()
+    const now      = Date.now()
+    const speaking = rms > threshold
+
+    voicePill.classList.toggle('speaking', speaking)
+    voicePill.querySelector('#voice-pill-txt').textContent = speaking ? 'HABLANDO' : 'SILENCIO'
+
+    if (speaking) {
+      lastSoundTime = now
+      if (isAutoPaused && autoPauseEnabled) resumeFromAutoPause()
     } else {
-      if (isSpeaking) {
-        isSpeaking = false
-        voicePill.classList.remove('speaking')
-        voicePill.querySelector('#voice-pill-txt').textContent = 'SILENCIO'
-        if (isPlaying && autoPauseEnabled) {
-          clearTimeout(silenceTimer)
-          silenceTimer = setTimeout(() => {
-            if (isPlaying && !isAutoPaused && autoPauseEnabled) autoPauseScroll()
-          }, getSilenceMs())
-        }
+      const silenceDuration = now - lastSoundTime
+      if (isPlaying && autoPauseEnabled && silenceDuration >= getSilenceMs()) {
+        autoPauseScroll()
       }
     }
-  }
-  tick()
+  }, 80)
 }
 
 function autoPauseScroll() {
+  if (isAutoPaused) return
   isAutoPaused = true
   isPlaying    = false
   if (raf) { cancelAnimationFrame(raf); raf = null }
@@ -804,18 +806,17 @@ function autoPauseScroll() {
 
 function resumeFromAutoPause() {
   isAutoPaused = false
+  pauseOverlay.classList.remove('show')
   if (!isPaused) {
     isPlaying = true
     lastTime  = null
     raf = requestAnimationFrame(loop)
   }
-  pauseOverlay.classList.remove('show')
 }
 
 voiceBtn.addEventListener('click', async () => {
   if (voiceActive) {
     stopVoiceDetection()
-    if (audioCtx) { audioCtx.close(); audioCtx = null }
   } else {
     await startVoiceDetection()
   }
@@ -841,7 +842,7 @@ document.getElementById('sensitivityControl').addEventListener('input', e => {
   saveSettings()
 })
 
-// ── CAMERA ──
+// ════ CAMERA ════
 async function initCamera() {
   const constraints = [
     { video:{ facingMode:'user', width:{ideal:640}, height:{ideal:480} }, audio:{ echoCancellation:true, noiseSuppression:true, autoGainControl:false, sampleRate:44100 } },
@@ -853,8 +854,8 @@ async function initCamera() {
   for (let i=0; i<constraints.length; i++) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia(constraints[i])
-      camEl.srcObject  = stream
-      window.appStream = stream
+      camEl.srcObject   = stream
+      window.appStream  = stream
       camMsg.style.display = 'none'
       camEl.style.display  = 'block'
       return
@@ -869,12 +870,12 @@ function showCamError(e) {
   camEl.style.display  = 'none'
   camMsg.style.display = 'flex'
   const msgs = {
-    NotAllowedError:     '🔒 Permiso denegado. Ve a Configuración del navegador → Permisos → Cámara y Micrófono → Permitir para este sitio.',
+    NotAllowedError:     '🔒 Permiso denegado. Ve a Configuración → Permisos → Cámara y Micrófono → Permitir.',
     NotFoundError:       '🔍 No se encontró cámara.',
     NotReadableError:    '⚠️ La cámara está siendo usada por otra app.',
     OverconstrainedError:'⚙️ Tu cámara no soporta la configuración.',
     SecurityError:       '🔐 Necesita HTTPS.',
-    TypeError:           '🌐 Tu navegador no soporta cámara. Usa Chrome o Firefox.'
+    TypeError:           '🌐 Usa Chrome o Firefox actualizados.'
   }
   camErrText.textContent = msgs[e.name] || ('Error: ' + e.name + ' — ' + e.message)
 }
@@ -882,7 +883,7 @@ function showCamError(e) {
 document.getElementById('retryBtn').addEventListener('click', initCamera)
 initCamera()
 
-// ── MIRROR ──
+// ════ MIRROR ════
 function setMirror(val) {
   isMirrored = val
   camEl.style.transform = val ? 'scaleX(-1)' : 'scaleX(1)'
@@ -894,7 +895,7 @@ document.getElementById('mirrorBtn').addEventListener('click', () => {
   saveSettings()
 })
 
-// ── PLAYBACK ──
+// ════ PLAYBACK ════
 function play() {
   if (isAutoPaused) { resumeFromAutoPause(); return }
   if (isPlaying && !isPaused) {
@@ -915,15 +916,16 @@ function play() {
   isPlaying=true; isPaused=false; isAutoPaused=false
   playBtn.textContent='⏸'; playBtn.classList.add('playing')
   lastTime=null; raf=requestAnimationFrame(loop)
-  if (autoPauseEnabled && !voiceActive && document.getElementById('autoPauseToggle').checked) {
+  if (autoPauseEnabled && !voiceActive) {
     startVoiceDetection()
+  } else if (voiceActive) {
+    lastSoundTime = Date.now()
   }
 }
 
 function stop() {
   isPlaying=false; isPaused=false; isAutoPaused=false
   if(raf){cancelAnimationFrame(raf);raf=null}
-  clearTimeout(silenceTimer)
   pauseOverlay.classList.remove('show')
   y=0
   const raw = document.getElementById('editor').value
@@ -960,7 +962,7 @@ document.addEventListener('keydown', e => {
   if(e.code==='ArrowDown'){speed=Math.max(20, speed-10);updateSpeedUI();saveSettings()}
 })
 
-// ── RECORDING ──
+// ════ RECORDING ════
 document.getElementById('recBtn').addEventListener('click', startCountdown)
 document.getElementById('stopRecBtn').addEventListener('click', stopRecording)
 
@@ -1048,7 +1050,7 @@ function saveVideo() {
   setTimeout(()=> URL.revokeObjectURL(url), 10000)
 }
 
-// ── PANEL & UI ──
+// ════ PANEL & UI ════
 function togglePanel(){ panel.classList.toggle('open'); overlay.classList.toggle('show') }
 document.getElementById('settingsBtn').addEventListener('click', togglePanel)
 overlay.addEventListener('click', togglePanel)
@@ -1144,7 +1146,7 @@ stage.addEventListener('touchend', e=>{
 
 document.addEventListener('visibilitychange', ()=>{ if(document.hidden) lastTime=null })
 
-// ── APPLY SETTINGS ON LOAD ──
+// ════ APPLY SETTINGS ON LOAD ════
 function applySettings() {
   updateSpeedUI()
   tele.style.fontSize = S.fontSize+'px'
