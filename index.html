@@ -1,39 +1,20 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <title>Teleprompter Pro</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
- <script>
+<script>
   (async () => {
     const slug = window.location.pathname.replace(/^\//, "");
-
     if (!slug) return;
-
     try {
       const res  = await fetch(`https://teleprompter-backend-production.up.railway.app/api/teleprompter/${slug}`);
       const data = await res.json();
-      if (!data.acceso) {
-        showBlocked(data.mensaje || "Acceso no válido.");
-      }
-    } catch (e) {
-      showBlocked("No se pudo verificar el acceso.");
-    }
-
+      if (!data.acceso) showBlocked(data.mensaje || "Acceso no válido.");
+    } catch (e) { showBlocked("No se pudo verificar el acceso."); }
     function showBlocked(msg) {
-      document.documentElement.innerHTML = `
-        <html><body style="
-          display:flex; flex-direction:column; align-items:center; justify-content:center;
-          height:100vh; background:#080808; color:#f0f0f0;
-          font-family:Arial,sans-serif; text-align:center; padding:30px; gap:16px;
-          margin:0;
-        ">
-          <div style="font-size:48px">🔒</div>
-          <h2 style="font-size:22px; margin:0">Acceso Restringido</h2>
-          <p style="color:#666; font-size:15px; max-width:300px; line-height:1.6; margin:0">${msg}</p>
-          <p style="color:#444; font-size:13px; margin:0">Contacta a tu administrador para obtener acceso.</p>
-        </body></html>`;
+      document.documentElement.innerHTML = `<html><body style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#080808;color:#f0f0f0;font-family:Arial,sans-serif;text-align:center;padding:30px;gap:16px;margin:0;"><div style="font-size:48px">🔒</div><h2 style="font-size:22px;margin:0">Acceso Restringido</h2><p style="color:#666;font-size:15px;max-width:300px;line-height:1.6;margin:0">${msg}</p><p style="color:#444;font-size:13px;margin:0">Contacta a tu administrador para obtener acceso.</p></body></html>`;
     }
   })();
 </script>
@@ -50,10 +31,12 @@
   --text: #f0f0f0;
   --muted: #666;
   --panel-w: 280px;
+  --word-active: #00e5ff;
+  --word-done: rgba(255,255,255,0.38);
+  --word-next: rgba(255,255,255,1);
 }
 
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-
 html, body {
   width:100%; height:100%;
   background: var(--bg);
@@ -66,49 +49,37 @@ html, body {
 }
 
 #editor-wrap {
-  position: relative;
-  height: 22vh; min-height: 80px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  transition: height .3s ease;
-  overflow: hidden;
+  position:relative; height:22vh; min-height:80px;
+  background:var(--surface); border-bottom:1px solid var(--border);
+  transition:height .3s ease; overflow:hidden;
 }
-body.hide-editor #editor-wrap { height: 0; }
-
+body.hide-editor #editor-wrap { height:0; }
 #editor-label {
-  position: absolute; top:10px; left:14px;
-  font-size:10px; letter-spacing:2px;
-  text-transform:uppercase; color:var(--muted);
-  font-family:'DM Mono',monospace; pointer-events:none;
+  position:absolute; top:10px; left:14px;
+  font-size:10px; letter-spacing:2px; text-transform:uppercase;
+  color:var(--muted); font-family:'DM Mono',monospace; pointer-events:none;
 }
 #editor {
-  width:100%; height:100%;
-  padding:32px 14px 14px;
+  width:100%; height:100%; padding:32px 14px 14px;
   background:transparent; color:var(--text);
   border:none; outline:none; resize:none;
-  font-size:15px; line-height:1.6;
-  font-family:'DM Mono',monospace;
+  font-size:15px; line-height:1.6; font-family:'DM Mono',monospace;
 }
 
 #stage {
   position:relative; height:78vh;
-  transition:height .3s ease;
-  overflow:hidden; background:#111;
+  transition:height .3s ease; overflow:hidden; background:#111;
 }
 body.hide-editor #stage { height:100vh; }
-
 #camera {
-  position:absolute; inset:0;
-  width:100%; height:100%;
-  object-fit:cover;
-  transform:scaleX(-1);
+  position:absolute; inset:0; width:100%; height:100%;
+  object-fit:cover; transform:scaleX(-1);
 }
-
 #stage::before {
   content:''; position:absolute; inset:0;
   background:linear-gradient(to bottom,
-    rgba(0,0,0,.5) 0%, rgba(0,0,0,.1) 25%,
-    rgba(0,0,0,.1) 75%, rgba(0,0,0,.5) 100%);
+    rgba(0,0,0,.5) 0%,rgba(0,0,0,.1) 25%,
+    rgba(0,0,0,.1) 75%,rgba(0,0,0,.5) 100%);
   z-index:1; pointer-events:none;
 }
 
@@ -143,12 +114,27 @@ body.hide-editor #stage { height:100vh; }
 
 #teleprompter {
   font-family:'DM Sans',Arial,sans-serif;
-  font-weight:600; font-size:42px; line-height:1.25;
+  font-weight:600; font-size:42px; line-height:1.35;
   max-width:88%; margin:auto; text-align:center;
   white-space:pre-wrap; color:#fff;
-  text-shadow:0 2px 8px rgba(0,0,0,.95),0 0 20px rgba(0,0,0,.7);
-  will-change:transform;
-  transform:translateZ(0);
+  will-change:transform; transform:translateZ(0);
+}
+
+#teleprompter .word {
+  display:inline-block;
+  color: var(--word-next);
+  text-shadow: 0 2px 8px rgba(0,0,0,.95), 0 0 20px rgba(0,0,0,.7);
+  transition: color .12s ease, text-shadow .12s ease, transform .1s ease;
+  cursor:default;
+}
+#teleprompter .word.done {
+  color: var(--word-done);
+  text-shadow: 0 1px 4px rgba(0,0,0,.6);
+}
+#teleprompter .word.active {
+  color: var(--word-active);
+  text-shadow: 0 0 20px rgba(0,229,255,.8), 0 0 40px rgba(0,229,255,.3), 0 2px 8px rgba(0,0,0,.95);
+  transform: scale(1.08);
 }
 
 #status-bar {
@@ -157,26 +143,53 @@ body.hide-editor #stage { height:100vh; }
   z-index:10; display:flex; align-items:center; gap:10px;
 }
 .status-pill {
-  background:rgba(0,0,0,.75);
-  border:1px solid var(--border);
+  background:rgba(0,0,0,.75); border:1px solid var(--border);
   border-radius:20px; padding:6px 14px;
   font-size:12px; font-family:'DM Mono',monospace;
   letter-spacing:1px; color:var(--muted);
 }
 #rec-pill { display:flex;align-items:center;gap:7px;opacity:0;transition:opacity .3s; }
 #rec-pill.active { opacity:1; }
-#rec-dot {
-  width:8px;height:8px;border-radius:50%;
-  background:var(--red);animation:blink 1s ease-in-out infinite;
-}
+#rec-dot { width:8px;height:8px;border-radius:50%;background:var(--red);animation:blink 1s ease-in-out infinite; }
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 #timer-display { opacity:0;transition:opacity .3s;color:var(--text); }
 #timer-display.active { opacity:1; }
 
+#voice-pill {
+  display:flex;align-items:center;gap:7px;
+  opacity:0;transition:opacity .4s;
+  position:absolute; top:14px; right:14px; z-index:10;
+}
+#voice-pill.active { opacity:1; }
+#voice-pill .vp-inner {
+  background:rgba(0,0,0,.75); border:1px solid rgba(0,229,255,.3);
+  border-radius:20px; padding:6px 14px;
+  font-size:11px; font-family:'DM Mono',monospace;
+  letter-spacing:1.5px; color:var(--accent);
+  display:flex; align-items:center; gap:7px;
+}
+#voice-bars {
+  display:flex; align-items:flex-end; gap:2px; height:14px;
+}
+#voice-bars span {
+  display:block; width:3px; border-radius:2px;
+  background:var(--accent); opacity:.4;
+  transition:height .1s ease, opacity .1s ease;
+}
+#voice-pill.speaking #voice-bars span { opacity:1; }
+#voice-pill.speaking #voice-bars span:nth-child(1){ animation:vbar 0.6s ease-in-out infinite; }
+#voice-pill.speaking #voice-bars span:nth-child(2){ animation:vbar 0.6s ease-in-out infinite .1s; }
+#voice-pill.speaking #voice-bars span:nth-child(3){ animation:vbar 0.6s ease-in-out infinite .2s; }
+#voice-pill.speaking #voice-bars span:nth-child(4){ animation:vbar 0.6s ease-in-out infinite .15s; }
+#voice-pill.speaking #voice-bars span:nth-child(5){ animation:vbar 0.6s ease-in-out infinite .05s; }
+@keyframes vbar {
+  0%,100%{ height:3px; }
+  50%{ height:13px; }
+}
+
 .corner-btn {
   position:absolute; top:14px; z-index:10;
-  background:rgba(0,0,0,.75);
-  border:1px solid var(--border);
+  background:rgba(0,0,0,.75); border:1px solid var(--border);
   border-radius:10px; padding:8px 14px;
   font-size:13px; cursor:pointer; color:var(--text);
   font-family:'DM Sans',sans-serif; transition:background .2s;
@@ -213,6 +226,18 @@ body.hide-editor #stage { height:100vh; }
   color:var(--muted); text-align:center; min-width:36px; line-height:1.3;
 }
 #speed-display span { display:block;font-size:16px;color:var(--text); }
+
+#voiceBtn {
+  background:rgba(0,229,255,.08);
+  border-color:rgba(0,229,255,.25);
+  font-size:16px;
+}
+#voiceBtn.enabled {
+  background:rgba(0,229,255,.2);
+  border-color:var(--accent);
+  color:var(--accent);
+  box-shadow: 0 0 12px rgba(0,229,255,.3);
+}
 
 #countdown {
   position:absolute;inset:0;
@@ -277,6 +302,11 @@ input[type=range]::-moz-range-thumb{
 .toggle input:checked + .toggle-slider{background:rgba(0,229,255,.2);border-color:var(--accent);}
 .toggle input:checked + .toggle-slider::before{transform:translateX(18px);background:var(--accent);}
 
+.panel-info {
+  font-size:12px; color:var(--muted); line-height:1.5; margin-top:8px;
+}
+.panel-info span { color:var(--accent); }
+
 #overlay{
   position:fixed;inset:0;background:rgba(0,0,0,.5);
   z-index:35;opacity:0;pointer-events:none;transition:opacity .3s;
@@ -322,6 +352,20 @@ input[type=range]::-moz-range-thumb{
   opacity:0;transition:opacity .5s;z-index:10;letter-spacing:1px;pointer-events:none;
 }
 
+#pause-overlay {
+  position:absolute; inset:0; z-index:8;
+  display:flex; align-items:center; justify-content:center;
+  pointer-events:none; opacity:0; transition:opacity .3s;
+}
+#pause-overlay.show { opacity:1; }
+#pause-badge {
+  background:rgba(0,0,0,.8); border:1px solid rgba(255,255,255,.15);
+  border-radius:16px; padding:10px 24px;
+  font-family:'DM Mono',monospace; font-size:13px; letter-spacing:2px;
+  color:rgba(255,255,255,.6); display:flex; align-items:center; gap:10px;
+}
+#pause-badge::before { content:'⏸'; font-size:16px; }
+
 @media(max-width:600px){
   #teleprompter{font-size:32px;max-width:95%;}
   .ctrl-btn{width:46px;height:46px;font-size:16px;}
@@ -330,42 +374,27 @@ input[type=range]::-moz-range-thumb{
   .controls{gap:8px;padding:8px 14px;}
 }
 
-/* ── MODO GRABACIÓN ── */
 body.rec-mode #editor-wrap { height:0 !important; }
 body.rec-mode #stage {
-  position: fixed !important;
-  inset: 0 !important;
-  height: 100% !important;
-  width: 100% !important;
-  z-index: 100 !important;
+  position:fixed !important; inset:0 !important;
+  height:100% !important; width:100% !important; z-index:100 !important;
 }
-body.rec-mode #teleprompter {
-  font-size: 62px !important;
-  max-width: 92% !important;
-}
-@media(max-width:600px){
-  body.rec-mode #teleprompter { font-size: 44px !important; }
-}
+body.rec-mode #teleprompter { font-size:62px !important; max-width:92% !important; }
+@media(max-width:600px){ body.rec-mode #teleprompter { font-size:44px !important; } }
 body.rec-mode #settingsBtn,
 body.rec-mode #mirrorBtn,
 body.rec-mode #textBtn { display:none !important; }
 body.rec-mode .controls {
-  bottom: 16px !important;
-  background: rgba(0,0,0,.35) !important;
-  border-color: rgba(255,255,255,.08) !important;
-  z-index: 200 !important;
+  bottom:16px !important; background:rgba(0,0,0,.35) !important;
+  border-color:rgba(255,255,255,.08) !important; z-index:200 !important;
 }
-body.rec-mode .ctrl-btn {
-  width: 40px !important;
-  height: 40px !important;
-  font-size: 14px !important;
-  opacity: 0.6 !important;
-}
+body.rec-mode .ctrl-btn { width:40px !important; height:40px !important; font-size:14px !important; opacity:0.6 !important; }
 body.rec-mode #recBtn,
 body.rec-mode #stopBtn,
 body.rec-mode .ctrl-divider:first-of-type { display:none !important; }
 body.rec-mode #pos-slider-wrap { z-index:200 !important; }
 body.rec-mode #status-bar { z-index:200 !important; }
+body.rec-mode #voice-pill { z-index:200 !important; }
 </style>
 </head>
 <body>
@@ -400,6 +429,19 @@ body.rec-mode #status-bar { z-index:200 !important; }
     <div id="timer-display" class="status-pill">00:00</div>
   </div>
 
+  <div id="voice-pill">
+    <div class="vp-inner">
+      <div id="voice-bars">
+        <span style="height:4px"></span>
+        <span style="height:8px"></span>
+        <span style="height:12px"></span>
+        <span style="height:7px"></span>
+        <span style="height:3px"></span>
+      </div>
+      <span id="voice-pill-txt">VOZ</span>
+    </div>
+  </div>
+
   <video id="camera" autoplay playsinline muted></video>
 
   <div id="cam-msg" style="display:none">
@@ -411,6 +453,10 @@ body.rec-mode #status-bar { z-index:200 !important; }
   <div id="reading-zone"><div id="teleprompter"></div></div>
   <div id="countdown"><div id="countdown-num">5</div></div>
   <div id="speed-touch-hint">↕ DESLIZA PARA VELOCIDAD</div>
+
+  <div id="pause-overlay">
+    <div id="pause-badge">PAUSA AUTOMÁTICA</div>
+  </div>
 
   <div id="pos-slider-wrap">
     <div id="pos-slider-val">38%</div>
@@ -425,6 +471,8 @@ body.rec-mode #status-bar { z-index:200 !important; }
 <div class="controls">
   <button class="ctrl-btn" id="playBtn">▶</button>
   <button class="ctrl-btn" id="stopBtn">⏹</button>
+  <div class="ctrl-divider"></div>
+  <button class="ctrl-btn" id="voiceBtn" title="Pausa automática por voz">🎙</button>
   <div class="ctrl-divider"></div>
   <button class="ctrl-btn" id="recBtn">●</button>
   <button class="ctrl-btn" id="stopRecBtn">■</button>
@@ -459,6 +507,33 @@ body.rec-mode #status-bar { z-index:200 !important; }
     </div>
   </div>
   <div class="panel-section">
+    <div class="panel-label">Karaoke <span class="panel-value" id="karaoke-lbl">ON</span></div>
+    <div class="panel-toggle-row">
+      <span style="font-size:13px;color:var(--muted)">Resaltar palabra activa</span>
+      <label class="toggle">
+        <input type="checkbox" id="karaokeToggle" checked>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <p class="panel-info">La palabra actual se ilumina en <span>cyan</span>. Las ya leídas se atenúan.</p>
+  </div>
+  <div class="panel-section">
+    <div class="panel-label">Pausa automática <span class="panel-value" id="autopause-lbl">ON</span></div>
+    <div class="panel-toggle-row">
+      <span style="font-size:13px;color:var(--muted)">Detener al silencio</span>
+      <label class="toggle">
+        <input type="checkbox" id="autoPauseToggle" checked>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <p class="panel-info">Detecta tu voz con el micrófono. Pausa el scroll si dejas de hablar.</p>
+  </div>
+  <div class="panel-section">
+    <div class="panel-label">Sensibilidad voz <span class="panel-value" id="sens-lbl">Med</span></div>
+    <input type="range" min="1" max="5" value="3" id="sensitivityControl">
+    <p class="panel-info">Baja = solo pausa en silencio largo. Alta = pausa rápido.</p>
+  </div>
+  <div class="panel-section">
     <div class="panel-label">Cuenta regresiva <span class="panel-value" id="cd-lbl">5s</span></div>
     <input type="range" min="0" max="10" value="5" id="countdownControl">
   </div>
@@ -491,103 +566,290 @@ function loadSettings() {
   try {
     const s = JSON.parse(localStorage.getItem('tp_settings') || '{}')
     return {
-      speed:     s.speed     ?? 120,
-      fontSize:  s.fontSize  ?? 42,
-      position:  s.position  ?? 38,
-      countdown: s.countdown ?? 5,
-      mirror:    s.mirror    ?? true,
-      autoPlay:  s.autoPlay  ?? true,
-      color:     s.color     ?? '#ffffff'
+      speed:      s.speed      ?? 120,
+      fontSize:   s.fontSize   ?? 42,
+      position:   s.position   ?? 38,
+      countdown:  s.countdown  ?? 5,
+      mirror:     s.mirror     ?? true,
+      autoPlay:   s.autoPlay   ?? true,
+      color:      s.color      ?? '#ffffff',
+      karaoke:    s.karaoke    ?? true,
+      autoPause:  s.autoPause  ?? true,
+      sensitivity:s.sensitivity?? 3
     }
   } catch(e) {
-    return { speed:120, fontSize:42, position:38, countdown:5, mirror:true, autoPlay:true, color:'#ffffff' }
+    return { speed:120, fontSize:42, position:38, countdown:5, mirror:true,
+             autoPlay:true, color:'#ffffff', karaoke:true, autoPause:true, sensitivity:3 }
   }
 }
 
 function saveSettings() {
   try {
     localStorage.setItem('tp_settings', JSON.stringify({
-      speed,
-      fontSize:  parseFloat(document.getElementById('fontControl').value),
-      position:  parseFloat(document.getElementById('positionControl').value),
-      countdown: countdownSecs,
-      mirror:    isMirrored,
-      autoPlay:  document.getElementById('autoPlayToggle').checked,
-      color:     currentColor
+      speed, fontSize: parseFloat(document.getElementById('fontControl').value),
+      position:   parseFloat(document.getElementById('positionControl').value),
+      countdown:  countdownSecs, mirror: isMirrored,
+      autoPlay:   document.getElementById('autoPlayToggle').checked,
+      color:      currentColor,
+      karaoke:    karaokeEnabled,
+      autoPause:  document.getElementById('autoPauseToggle').checked,
+      sensitivity: parseInt(document.getElementById('sensitivityControl').value)
     }))
   } catch(e) {}
 }
 
 const S = loadSettings()
 
-let speed        = S.speed
-let countdownSecs= S.countdown
-let isMirrored   = S.mirror
-let currentColor = S.color
+let speed         = S.speed
+let countdownSecs = S.countdown
+let isMirrored    = S.mirror
+let currentColor  = S.color
+let karaokeEnabled= S.karaoke
 let y=0, isPlaying=false, isPaused=false
 let lastTime=null, raf=null
 let mediaRecorder=null, recordedChunks=[]
 let timerInterval=null, recSeconds=0
 let touchStartY=null, posDragging=false
 
-const tele        = document.getElementById('teleprompter')
-const readingZone = document.getElementById('reading-zone')
-const camEl       = document.getElementById('camera')
-const camMsg      = document.getElementById('cam-msg')
-const camErrText  = document.getElementById('cam-err-text')
-const countdownEl = document.getElementById('countdown')
-const countdownNum= document.getElementById('countdown-num')
-const panel       = document.getElementById('panel')
-const overlay     = document.getElementById('overlay')
-const recPill     = document.getElementById('rec-pill')
-const timerDisp   = document.getElementById('timer-display')
-const playBtn     = document.getElementById('playBtn')
-const speedVal    = document.getElementById('speed-val')
-const posTrack    = document.getElementById('pos-slider-track')
-const posThumb    = document.getElementById('pos-slider-thumb')
-const posFill     = document.getElementById('pos-slider-fill')
-const posValLbl   = document.getElementById('pos-slider-val')
-const stage       = document.getElementById('stage')
-const hint        = document.getElementById('speed-touch-hint')
+const tele         = document.getElementById('teleprompter')
+const readingZone  = document.getElementById('reading-zone')
+const camEl        = document.getElementById('camera')
+const camMsg       = document.getElementById('cam-msg')
+const camErrText   = document.getElementById('cam-err-text')
+const countdownEl  = document.getElementById('countdown')
+const countdownNum = document.getElementById('countdown-num')
+const panel        = document.getElementById('panel')
+const overlay      = document.getElementById('overlay')
+const recPill      = document.getElementById('rec-pill')
+const timerDisp    = document.getElementById('timer-display')
+const playBtn      = document.getElementById('playBtn')
+const speedVal     = document.getElementById('speed-val')
+const posTrack     = document.getElementById('pos-slider-track')
+const posThumb     = document.getElementById('pos-slider-thumb')
+const posFill      = document.getElementById('pos-slider-fill')
+const posValLbl    = document.getElementById('pos-slider-val')
+const stage        = document.getElementById('stage')
+const hint         = document.getElementById('speed-touch-hint')
+const voicePill    = document.getElementById('voice-pill')
+const pauseOverlay = document.getElementById('pause-overlay')
+const voiceBtn     = document.getElementById('voiceBtn')
 
-function applySettings() {
-  updateSpeedUI()
-  tele.style.fontSize = S.fontSize + 'px'
-  document.getElementById('fontControl').value = S.fontSize
-  document.getElementById('font-lbl').textContent = S.fontSize + 'px'
-  document.getElementById('positionControl').value = S.position
-  setPosFromPercent(S.position)
-  document.getElementById('countdownControl').value = S.countdown
-  document.getElementById('cd-lbl').textContent = S.countdown + 's'
-  document.getElementById('mirrorToggle').checked = S.mirror
-  setMirror(S.mirror)
-  document.getElementById('autoPlayToggle').checked = S.autoPlay
-  tele.style.color = S.color
-  if (S.color !== '#ffffff') {
-    tele.style.textShadow = `0 2px 8px rgba(0,0,0,.95),0 0 12px ${S.color}66`
-  }
-  document.querySelectorAll('.color-swatch').forEach(sw => {
-    sw.classList.toggle('active', sw.dataset.color === S.color)
+// ── KARAOKE ──
+let wordSpans     = []
+let activeWordIdx = -1
+
+function buildKaraokeDom(rawText) {
+  tele.innerHTML = ''
+  wordSpans = []
+  activeWordIdx = -1
+  const tokens = rawText.split(/(\n)/)
+  tokens.forEach(token => {
+    if (token === '\n') { tele.appendChild(document.createTextNode('\n')); return }
+    const parts = token.split(/(\s+)/)
+    parts.forEach(part => {
+      if (/^\s+$/.test(part)) {
+        tele.appendChild(document.createTextNode(part))
+      } else if (part.length > 0) {
+        const span = document.createElement('span')
+        span.className = 'word'
+        span.textContent = part
+        span.dataset.idx = wordSpans.length
+        span.addEventListener('click', () => jumpToWord(parseInt(span.dataset.idx)))
+        tele.appendChild(span)
+        wordSpans.push(span)
+      }
+    })
   })
 }
 
+function updateActiveWord() {
+  if (!karaokeEnabled || wordSpans.length === 0) return
+  const rz   = readingZone.getBoundingClientRect()
+  const rzCY = rz.top + rz.height / 2
+  let closestIdx = -1, closestDist = Infinity
+  wordSpans.forEach((span, i) => {
+    const r = span.getBoundingClientRect()
+    const dist = Math.abs((r.top + r.height / 2) - rzCY)
+    if (dist < closestDist) { closestDist = dist; closestIdx = i }
+  })
+  if (closestIdx !== activeWordIdx) {
+    if (activeWordIdx >= 0) wordSpans[activeWordIdx]?.classList.remove('active')
+    wordSpans.forEach((s, i) => {
+      s.classList.toggle('done',   i < closestIdx)
+      s.classList.toggle('active', i === closestIdx)
+    })
+    activeWordIdx = closestIdx
+  }
+}
+
+function clearKaraokeHighlights() {
+  wordSpans.forEach(s => { s.classList.remove('active', 'done') })
+  activeWordIdx = -1
+}
+
+function jumpToWord(idx) {
+  if (!isPlaying && !isPaused) return
+  if (idx < 0 || idx >= wordSpans.length) return
+  const rz     = readingZone.getBoundingClientRect()
+  const rzCY   = rz.top + rz.height / 2
+  const spanR  = wordSpans[idx].getBoundingClientRect()
+  y += (rzCY - (spanR.top + spanR.height / 2))
+  tele.style.transform = `translateZ(0) translateY(${y}px)`
+  updateActiveWord()
+}
+
+function applyColorToWords(color) {
+  if (!karaokeEnabled) return
+  wordSpans.forEach(s => {
+    if (!s.classList.contains('active') && !s.classList.contains('done')) {
+      s.style.color = color !== '#ffffff' ? color : ''
+    }
+  })
+}
+
+// ── VOICE DETECTION (Web Audio API) ──
+let audioCtx         = null
+let analyser         = null
+let micSource        = null
+let voiceActive      = false
+let isSpeaking       = false
+let silenceTimer     = null
+let voiceRafId       = null
+let isAutoPaused     = false
+let autoPauseEnabled = S.autoPause
+
+function getSilenceMs() {
+  const v = parseInt(document.getElementById('sensitivityControl').value)
+  return Math.round(2000 - (v - 1) * 375)
+}
+function getVolumeThreshold() {
+  const v = parseInt(document.getElementById('sensitivityControl').value)
+  return 18 - (v - 1) * 3
+}
+
+async function startVoiceDetection() {
+  if (audioCtx) return
+  try {
+    const stream = window.appStream || await navigator.mediaDevices.getUserMedia({ audio: true })
+    audioCtx  = new (window.AudioContext || window.webkitAudioContext)()
+    analyser  = audioCtx.createAnalyser()
+    analyser.fftSize = 256
+    analyser.smoothingTimeConstant = 0.4
+    micSource = audioCtx.createMediaStreamSource(stream)
+    micSource.connect(analyser)
+    voiceActive = true
+    voicePill.classList.add('active')
+    voiceBtn.classList.add('enabled')
+    monitorVolume()
+  } catch(e) {
+    console.warn('Voice detection unavailable:', e)
+    voiceActive = false
+  }
+}
+
+function stopVoiceDetection() {
+  voiceActive = false
+  if (voiceRafId) { cancelAnimationFrame(voiceRafId); voiceRafId = null }
+  clearTimeout(silenceTimer)
+  voicePill.classList.remove('active', 'speaking')
+  voiceBtn.classList.remove('enabled')
+  if (isAutoPaused) resumeFromAutoPause()
+}
+
+function monitorVolume() {
+  if (!voiceActive) return
+  const data = new Uint8Array(analyser.frequencyBinCount)
+  function tick() {
+    if (!voiceActive) return
+    voiceRafId = requestAnimationFrame(tick)
+    analyser.getByteFrequencyData(data)
+    const binStart = Math.floor(200  / (audioCtx.sampleRate / analyser.fftSize))
+    const binEnd   = Math.floor(3000 / (audioCtx.sampleRate / analyser.fftSize))
+    let sum = 0
+    const count = Math.max(1, binEnd - binStart)
+    for (let i = binStart; i < binEnd && i < data.length; i++) sum += data[i] * data[i]
+    const rms = Math.sqrt(sum / count)
+    const threshold = getVolumeThreshold()
+    if (rms > threshold) {
+      if (!isSpeaking) {
+        isSpeaking = true
+        voicePill.classList.add('speaking')
+        voicePill.querySelector('#voice-pill-txt').textContent = 'HABLANDO'
+      }
+      clearTimeout(silenceTimer)
+      if (isAutoPaused && !isPlaying && autoPauseEnabled) resumeFromAutoPause()
+    } else {
+      if (isSpeaking) {
+        isSpeaking = false
+        voicePill.classList.remove('speaking')
+        voicePill.querySelector('#voice-pill-txt').textContent = 'SILENCIO'
+        if (isPlaying && autoPauseEnabled) {
+          clearTimeout(silenceTimer)
+          silenceTimer = setTimeout(() => {
+            if (isPlaying && !isAutoPaused && autoPauseEnabled) autoPauseScroll()
+          }, getSilenceMs())
+        }
+      }
+    }
+  }
+  tick()
+}
+
+function autoPauseScroll() {
+  isAutoPaused = true
+  isPlaying    = false
+  if (raf) { cancelAnimationFrame(raf); raf = null }
+  pauseOverlay.classList.add('show')
+}
+
+function resumeFromAutoPause() {
+  isAutoPaused = false
+  if (!isPaused) {
+    isPlaying = true
+    lastTime  = null
+    raf = requestAnimationFrame(loop)
+  }
+  pauseOverlay.classList.remove('show')
+}
+
+voiceBtn.addEventListener('click', async () => {
+  if (voiceActive) {
+    stopVoiceDetection()
+    if (audioCtx) { audioCtx.close(); audioCtx = null }
+  } else {
+    await startVoiceDetection()
+  }
+  saveSettings()
+})
+
+document.getElementById('autoPauseToggle').addEventListener('change', e => {
+  autoPauseEnabled = e.target.checked
+  document.getElementById('autopause-lbl').textContent = autoPauseEnabled ? 'ON' : 'OFF'
+  saveSettings()
+})
+
+document.getElementById('karaokeToggle').addEventListener('change', e => {
+  karaokeEnabled = e.target.checked
+  document.getElementById('karaoke-lbl').textContent = karaokeEnabled ? 'ON' : 'OFF'
+  if (!karaokeEnabled) clearKaraokeHighlights()
+  saveSettings()
+})
+
+const sensLabels = ['Muy baja','Baja','Med','Alta','Muy alta']
+document.getElementById('sensitivityControl').addEventListener('input', e => {
+  document.getElementById('sens-lbl').textContent = sensLabels[parseInt(e.target.value)-1]
+  saveSettings()
+})
+
+// ── CAMERA ──
 async function initCamera() {
   const constraints = [
-    {
-      video: { facingMode:'user', width:{ideal:640}, height:{ideal:480} },
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl:  false,
-        sampleRate:       44100
-      }
-    },
+    { video:{ facingMode:'user', width:{ideal:640}, height:{ideal:480} }, audio:{ echoCancellation:true, noiseSuppression:true, autoGainControl:false, sampleRate:44100 } },
     { video:{ facingMode:'user' }, audio:{ echoCancellation:true, noiseSuppression:true, autoGainControl:false } },
     { video:true, audio:{ echoCancellation:true, noiseSuppression:true, autoGainControl:false } },
     { video:true, audio:true },
     { video:true, audio:false }
   ]
-
   for (let i=0; i<constraints.length; i++) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia(constraints[i])
@@ -598,7 +860,7 @@ async function initCamera() {
       return
     } catch(e) {
       console.warn('Intento',i,'falló:',e.name,e.message)
-      if (i===constraints.length-1) showCamError(e)
+      if(i===constraints.length-1) showCamError(e)
     }
   }
 }
@@ -608,11 +870,11 @@ function showCamError(e) {
   camMsg.style.display = 'flex'
   const msgs = {
     NotAllowedError:     '🔒 Permiso denegado. Ve a Configuración del navegador → Permisos → Cámara y Micrófono → Permitir para este sitio.',
-    NotFoundError:       '🔍 No se encontró cámara. Verifica que tu dispositivo tenga cámara disponible.',
-    NotReadableError:    '⚠️ La cámara está siendo usada por otra app. Cierra otras apps que usen la cámara.',
-    OverconstrainedError:'⚙️ Tu cámara no soporta la configuración solicitada.',
-    SecurityError:       '🔐 Necesita HTTPS. Abre el archivo desde un servidor web (ej: Vercel, GitHub Pages).',
-    TypeError:           '🌐 Tu navegador no soporta cámara. Usa Chrome o Firefox actualizados.'
+    NotFoundError:       '🔍 No se encontró cámara.',
+    NotReadableError:    '⚠️ La cámara está siendo usada por otra app.',
+    OverconstrainedError:'⚙️ Tu cámara no soporta la configuración.',
+    SecurityError:       '🔐 Necesita HTTPS.',
+    TypeError:           '🌐 Tu navegador no soporta cámara. Usa Chrome o Firefox.'
   }
   camErrText.textContent = msgs[e.name] || ('Error: ' + e.name + ' — ' + e.message)
 }
@@ -620,20 +882,21 @@ function showCamError(e) {
 document.getElementById('retryBtn').addEventListener('click', initCamera)
 initCamera()
 
+// ── MIRROR ──
 function setMirror(val) {
   isMirrored = val
   camEl.style.transform = val ? 'scaleX(-1)' : 'scaleX(1)'
 }
-document.getElementById('mirrorToggle').addEventListener('change', e => {
-  setMirror(e.target.checked); saveSettings()
-})
+document.getElementById('mirrorToggle').addEventListener('change', e => { setMirror(e.target.checked); saveSettings() })
 document.getElementById('mirrorBtn').addEventListener('click', () => {
   isMirrored = !isMirrored; setMirror(isMirrored)
   document.getElementById('mirrorToggle').checked = isMirrored
   saveSettings()
 })
 
+// ── PLAYBACK ──
 function play() {
+  if (isAutoPaused) { resumeFromAutoPause(); return }
   if (isPlaying && !isPaused) {
     isPaused=true; isPlaying=false
     playBtn.textContent='▶'; playBtn.classList.remove('playing'); return
@@ -645,19 +908,32 @@ function play() {
   }
   const raw = document.getElementById('editor').value
   if (!raw.trim()) return
-  tele.textContent = raw
+  buildKaraokeDom(raw)
+  applyColorToWords(currentColor)
   y = readingZone.offsetHeight + 80
   tele.style.transform = `translateZ(0) translateY(${y}px)`
-  isPlaying=true; isPaused=false
+  isPlaying=true; isPaused=false; isAutoPaused=false
   playBtn.textContent='⏸'; playBtn.classList.add('playing')
   lastTime=null; raf=requestAnimationFrame(loop)
+  if (autoPauseEnabled && !voiceActive && document.getElementById('autoPauseToggle').checked) {
+    startVoiceDetection()
+  }
 }
 
 function stop() {
-  isPlaying=false; isPaused=false
+  isPlaying=false; isPaused=false; isAutoPaused=false
   if(raf){cancelAnimationFrame(raf);raf=null}
+  clearTimeout(silenceTimer)
+  pauseOverlay.classList.remove('show')
   y=0
-  tele.textContent = document.getElementById('editor').value
+  const raw = document.getElementById('editor').value
+  if (karaokeEnabled) {
+    buildKaraokeDom(raw)
+    applyColorToWords(currentColor)
+    clearKaraokeHighlights()
+  } else {
+    tele.textContent = raw
+  }
   tele.style.transform = 'translateZ(0) translateY(0)'
   playBtn.textContent='▶'; playBtn.classList.remove('playing')
 }
@@ -669,6 +945,7 @@ function loop(ts) {
   lastTime=ts
   y -= speed * delta
   tele.style.transform = `translateZ(0) translateY(${y}px)`
+  updateActiveWord()
   raf=requestAnimationFrame(loop)
 }
 
@@ -683,27 +960,23 @@ document.addEventListener('keydown', e => {
   if(e.code==='ArrowDown'){speed=Math.max(20, speed-10);updateSpeedUI();saveSettings()}
 })
 
+// ── RECORDING ──
 document.getElementById('recBtn').addEventListener('click', startCountdown)
 document.getElementById('stopRecBtn').addEventListener('click', stopRecording)
 
 function goFullscreen() {
   const el = document.documentElement
-  const fn = el.requestFullscreen || el.webkitRequestFullscreen ||
-             el.mozRequestFullScreen || el.msRequestFullscreen
+  const fn = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen
   if (fn) fn.call(el).catch(()=>{})
 }
-
 function exitFullscreen() {
-  const fn = document.exitFullscreen || document.webkitExitFullscreen ||
-             document.mozCancelFullScreen || document.msExitFullscreen
+  const fn = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen
   if (fn) fn.call(document).catch(()=>{})
 }
 
 function startCountdown() {
-  document.body.classList.add('hide-editor')
-  document.body.classList.add('rec-mode')
+  document.body.classList.add('hide-editor', 'rec-mode')
   goFullscreen()
-
   let val = countdownSecs
   if(val===0){ startRecording(); return }
   countdownNum.textContent = val
@@ -712,9 +985,7 @@ function startCountdown() {
     val--
     countdownNum.textContent = val || '¡GO!'
     countdownNum.style.transform = 'scale(.5)'
-    requestAnimationFrame(()=>requestAnimationFrame(()=>
-      countdownNum.style.transform = 'scale(1)'
-    ))
+    requestAnimationFrame(()=>requestAnimationFrame(()=> countdownNum.style.transform = 'scale(1)'))
     if(val<=0){
       clearInterval(iv)
       setTimeout(()=>{ countdownEl.classList.remove('show'); startRecording() }, 600)
@@ -725,117 +996,84 @@ function startCountdown() {
 function startRecording() {
   if(!window.appStream){
     alert('No hay cámara. Permite el acceso primero.')
-    document.body.classList.remove('hide-editor')
-    document.body.classList.remove('rec-mode')
-    return
+    document.body.classList.remove('hide-editor','rec-mode'); return
   }
   recordedChunks = []
-
-  const types = [
-    'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
-    'video/mp4',
-    'video/webm;codecs=vp8,opus',
-    'video/webm'
-  ]
+  const types = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp8,opus','video/webm']
   let mimeType = ''
-  for (const t of types) {
-    try { if (MediaRecorder.isTypeSupported(t)) { mimeType = t; break } } catch(e){}
-  }
-
+  for (const t of types) { try { if(MediaRecorder.isTypeSupported(t)){ mimeType=t; break } } catch(e){} }
   let mr
   try {
-    mr = new MediaRecorder(window.appStream, mimeType
-      ? { mimeType, videoBitsPerSecond: 6000000, audioBitsPerSecond: 128000 }
-      : {})
+    mr = new MediaRecorder(window.appStream, mimeType ? { mimeType, videoBitsPerSecond:6000000, audioBitsPerSecond:128000 } : {})
   } catch(e) {
     try { mr = new MediaRecorder(window.appStream) }
-    catch(e2){ alert('No se puede grabar: ' + e2.message); return }
+    catch(e2){ alert('No se puede grabar: '+e2.message); return }
   }
   mediaRecorder = mr
-
-  mediaRecorder.ondataavailable = e => {
-    if (e.data && e.data.size > 0) recordedChunks.push(e.data)
-  }
+  mediaRecorder.ondataavailable = e => { if(e.data&&e.data.size>0) recordedChunks.push(e.data) }
   mediaRecorder.onstop = saveVideo
   mediaRecorder.start(300)
-
   recPill.classList.add('active')
-  recSeconds = 0
-  timerDisp.textContent = '00:00'
-  timerDisp.classList.add('active')
+  recSeconds=0; timerDisp.textContent='00:00'; timerDisp.classList.add('active')
   timerInterval = setInterval(()=>{
     recSeconds++
-    timerDisp.textContent =
-      String(Math.floor(recSeconds/60)).padStart(2,'0') + ':' +
-      String(recSeconds%60).padStart(2,'0')
+    timerDisp.textContent = String(Math.floor(recSeconds/60)).padStart(2,'0')+':'+String(recSeconds%60).padStart(2,'0')
   }, 1000)
-
   if(document.getElementById('autoPlayToggle').checked && !isPlaying) play()
 }
 
 function stopRecording() {
-  if(mediaRecorder && mediaRecorder.state !== 'inactive') {
-    try { mediaRecorder.requestData() } catch(e){}
+  if(mediaRecorder && mediaRecorder.state!=='inactive'){
+    try{mediaRecorder.requestData()}catch(e){}
     mediaRecorder.stop()
   }
   clearInterval(timerInterval)
   recPill.classList.remove('active')
   timerDisp.classList.remove('active')
-  document.body.classList.remove('hide-editor')
-  document.body.classList.remove('rec-mode')
+  document.body.classList.remove('hide-editor','rec-mode')
   exitFullscreen()
 }
 
 function saveVideo() {
-  if (!recordedChunks.length) {
-    alert('La grabación está vacía. Verifica permisos de cámara.')
-    return
-  }
+  if(!recordedChunks.length){ alert('La grabación está vacía.'); return }
   const mime = recordedChunks[0].type || 'video/mp4'
   const ext  = mime.includes('mp4') ? 'mp4' : 'webm'
-  const blob = new Blob(recordedChunks, { type: mime })
-  if (blob.size < 500) {
-    alert('El archivo grabado está vacío. Intenta de nuevo.')
-    return
-  }
+  const blob = new Blob(recordedChunks, { type:mime })
+  if(blob.size<500){ alert('El archivo grabado está vacío. Intenta de nuevo.'); return }
   const url = URL.createObjectURL(blob)
   const a   = document.createElement('a')
   a.href    = url
-  a.download= 'teleprompter_' +
-    new Date().toISOString().slice(0,19).replace(/[:.]/g,'-') + '.' + ext
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
+  a.download= 'teleprompter_'+new Date().toISOString().slice(0,19).replace(/[:.]/g,'-')+'.'+ext
+  document.body.appendChild(a); a.click(); document.body.removeChild(a)
   setTimeout(()=> URL.revokeObjectURL(url), 10000)
 }
 
+// ── PANEL & UI ──
 function togglePanel(){ panel.classList.toggle('open'); overlay.classList.toggle('show') }
 document.getElementById('settingsBtn').addEventListener('click', togglePanel)
 overlay.addEventListener('click', togglePanel)
-document.getElementById('textBtn').addEventListener('click', ()=>
-  document.body.classList.toggle('hide-editor')
-)
+document.getElementById('textBtn').addEventListener('click', ()=> document.body.classList.toggle('hide-editor'))
 
 function updateSpeedUI() {
   speedVal.textContent = speed
-  document.getElementById('speed-lbl').textContent = speed + ' px/s'
+  document.getElementById('speed-lbl').textContent = speed+' px/s'
   document.getElementById('speedControl').value = speed
 }
 
 document.getElementById('speedControl').addEventListener('input', e=>{
-  speed = parseFloat(e.target.value); updateSpeedUI(); saveSettings()
+  speed=parseFloat(e.target.value); updateSpeedUI(); saveSettings()
 })
 document.getElementById('fontControl').addEventListener('input', e=>{
-  tele.style.fontSize = e.target.value + 'px'
-  document.getElementById('font-lbl').textContent = e.target.value + 'px'
+  tele.style.fontSize = e.target.value+'px'
+  document.getElementById('font-lbl').textContent = e.target.value+'px'
   saveSettings()
 })
 document.getElementById('positionControl').addEventListener('input', e=>{
   setPosFromPercent(parseFloat(e.target.value)); saveSettings()
 })
 document.getElementById('countdownControl').addEventListener('input', e=>{
-  countdownSecs = parseInt(e.target.value)
-  document.getElementById('cd-lbl').textContent = countdownSecs + 's'
+  countdownSecs=parseInt(e.target.value)
+  document.getElementById('cd-lbl').textContent = countdownSecs+'s'
   saveSettings()
 })
 document.getElementById('autoPlayToggle').addEventListener('change', ()=> saveSettings())
@@ -846,9 +1084,14 @@ document.querySelectorAll('.color-swatch').forEach(sw=>{
     sw.classList.add('active')
     currentColor = sw.dataset.color
     tele.style.color = currentColor
-    tele.style.textShadow = currentColor !== '#ffffff'
-      ? `0 2px 8px rgba(0,0,0,.95),0 0 12px ${currentColor}66`
-      : '0 2px 8px rgba(0,0,0,.95),0 0 20px rgba(0,0,0,.7)'
+    document.documentElement.style.setProperty('--word-active',
+      currentColor === '#ffffff' ? '#00e5ff' : currentColor)
+    if (currentColor !== '#ffffff') {
+      tele.style.textShadow = `0 2px 8px rgba(0,0,0,.95),0 0 12px ${currentColor}66`
+    } else {
+      tele.style.textShadow = '0 2px 8px rgba(0,0,0,.95),0 0 20px rgba(0,0,0,.7)'
+    }
+    applyColorToWords(currentColor)
     saveSettings()
   })
 })
@@ -899,17 +1142,42 @@ stage.addEventListener('touchend', e=>{
   lastTap = now
 },{passive:true})
 
-document.addEventListener('visibilitychange', ()=>{
-  if(document.hidden) lastTime=null
-})
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) lastTime=null })
+
+// ── APPLY SETTINGS ON LOAD ──
+function applySettings() {
+  updateSpeedUI()
+  tele.style.fontSize = S.fontSize+'px'
+  document.getElementById('fontControl').value = S.fontSize
+  document.getElementById('font-lbl').textContent = S.fontSize+'px'
+  document.getElementById('positionControl').value = S.position
+  setPosFromPercent(S.position)
+  document.getElementById('countdownControl').value = S.countdown
+  document.getElementById('cd-lbl').textContent = S.countdown+'s'
+  document.getElementById('mirrorToggle').checked = S.mirror
+  setMirror(S.mirror)
+  document.getElementById('autoPlayToggle').checked = S.autoPlay
+  karaokeEnabled = S.karaoke
+  document.getElementById('karaokeToggle').checked = S.karaoke
+  document.getElementById('karaoke-lbl').textContent = S.karaoke ? 'ON' : 'OFF'
+  autoPauseEnabled = S.autoPause
+  document.getElementById('autoPauseToggle').checked = S.autoPause
+  document.getElementById('autopause-lbl').textContent = S.autoPause ? 'ON' : 'OFF'
+  document.getElementById('sensitivityControl').value = S.sensitivity
+  document.getElementById('sens-lbl').textContent = sensLabels[(S.sensitivity||3)-1]
+  tele.style.color = S.color
+  if (S.color !== '#ffffff') {
+    tele.style.textShadow = `0 2px 8px rgba(0,0,0,.95),0 0 12px ${S.color}66`
+    document.documentElement.style.setProperty('--word-active', S.color)
+  }
+  document.querySelectorAll('.color-swatch').forEach(sw=>{
+    sw.classList.toggle('active', sw.dataset.color === S.color)
+  })
+  const raw = document.getElementById('editor').value
+  tele.textContent = raw
+}
 
 applySettings()
 </script>
 </body>
 </html>
-
-
-
-
-
-
